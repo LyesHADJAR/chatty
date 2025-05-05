@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "431304368414",
+    "project_id": "cns-project-f0d24",
+    "storage_bucket": "cns-project-f0d24.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:431304368414:android:86acc5d07dde4e555a290f",
+        "android_client_info": {
+          "package_name": "com.example.chatty"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyChYeqa0hKMQne-xe1RFORriNKM22jAiGg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
