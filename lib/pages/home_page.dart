@@ -81,7 +81,7 @@ class _HomePageState extends State<HomePage>
                     contentPadding: const EdgeInsets.symmetric(vertical: 14),
                     prefixIcon: const Icon(Icons.search, size: 20),
                     hintStyle: TextStyle(
-                      color: theme.colorScheme.onBackground.withOpacity(0.6),
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
                       fontFamily: 'Montserrat',
                     ),
                   ),
@@ -141,7 +141,7 @@ class _HomePageState extends State<HomePage>
         color:
             theme.brightness == Brightness.light
                 ? Colors.grey.shade50
-                : theme.colorScheme.background,
+                : theme.colorScheme.surface,
         child:
             _isSearching
                 ? (_tabController.index == 0
@@ -215,7 +215,7 @@ class _HomePageState extends State<HomePage>
                 },
               ),
               hintStyle: TextStyle(
-                color: theme.colorScheme.onBackground.withOpacity(0.5),
+                color: theme.colorScheme.onSurface.withOpacity(0.5),
                 fontFamily: 'Montserrat',
               ),
               enabledBorder: OutlineInputBorder(
@@ -255,7 +255,7 @@ class _HomePageState extends State<HomePage>
                         Icon(
                           Icons.search,
                           size: 80,
-                          color: theme.colorScheme.onBackground.withOpacity(
+                          color: theme.colorScheme.onSurface.withOpacity(
                             0.3,
                           ),
                         ),
@@ -264,7 +264,7 @@ class _HomePageState extends State<HomePage>
                           'Enter an email address to find someone',
                           textAlign: TextAlign.center,
                           style: theme.textTheme.bodyLarge?.copyWith(
-                            color: theme.colorScheme.onBackground.withOpacity(
+                            color: theme.colorScheme.onSurface.withOpacity(
                               0.7,
                             ),
                             fontFamily: 'Montserrat',
@@ -295,7 +295,7 @@ class _HomePageState extends State<HomePage>
                         child: Text(
                           'No users found',
                           style: theme.textTheme.bodyLarge?.copyWith(
-                            color: theme.colorScheme.onBackground.withOpacity(
+                            color: theme.colorScheme.onSurface.withOpacity(
                               0.7,
                             ),
                             fontFamily: 'Montserrat',
@@ -326,7 +326,7 @@ class _HomePageState extends State<HomePage>
                             Icon(
                               Icons.person_off,
                               size: 60,
-                              color: theme.colorScheme.onBackground.withOpacity(
+                              color: theme.colorScheme.onSurface.withOpacity(
                                 0.3,
                               ),
                             ),
@@ -335,7 +335,7 @@ class _HomePageState extends State<HomePage>
                               'No user found with email containing "$query"',
                               textAlign: TextAlign.center,
                               style: theme.textTheme.bodyLarge?.copyWith(
-                                color: theme.colorScheme.onBackground
+                                color: theme.colorScheme.onSurface
                                     .withOpacity(0.7),
                                 fontFamily: 'Montserrat',
                               ),
@@ -703,7 +703,7 @@ class _HomePageState extends State<HomePage>
                   ? Icons.chat_bubble_outline
                   : Icons.people_outline,
               size: 70,
-              color: theme.colorScheme.onBackground.withOpacity(0.3),
+              color: theme.colorScheme.onSurface.withOpacity(0.3),
             ),
             const SizedBox(height: 16),
             Text(
@@ -711,7 +711,7 @@ class _HomePageState extends State<HomePage>
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 fontFamily: 'Montserrat',
-                color: theme.colorScheme.onBackground,
+                color: theme.colorScheme.onSurface,
               ),
               textAlign: TextAlign.center,
             ),
@@ -719,7 +719,7 @@ class _HomePageState extends State<HomePage>
             Text(
               message,
               style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onBackground.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
                 fontFamily: 'Montserrat',
               ),
               textAlign: TextAlign.center,
@@ -750,7 +750,7 @@ class _HomePageState extends State<HomePage>
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 fontFamily: 'Montserrat',
-                color: theme.colorScheme.onBackground,
+                color: theme.colorScheme.onSurface,
               ),
               textAlign: TextAlign.center,
             ),
@@ -758,7 +758,7 @@ class _HomePageState extends State<HomePage>
             Text(
               message,
               style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onBackground.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
                 fontFamily: 'Montserrat',
               ),
               textAlign: TextAlign.center,

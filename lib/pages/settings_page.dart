@@ -97,7 +97,7 @@ class SettingsPage extends StatelessWidget {
                   trailing: Icon(
                     Icons.arrow_forward_ios,
                     size: 16,
-                    color: theme.colorScheme.onBackground.withOpacity(0.5),
+                    color: theme.colorScheme.onSurface.withOpacity(0.5),
                   ),
                   onTap: () {
                     // Navigate to profile edit page
@@ -120,7 +120,7 @@ class SettingsPage extends StatelessWidget {
                   trailing: Icon(
                     Icons.arrow_forward_ios,
                     size: 16,
-                    color: theme.colorScheme.onBackground.withOpacity(0.5),
+                    color: theme.colorScheme.onSurface.withOpacity(0.5),
                   ),
                   onTap: () {
                     // Navigate to change password page
@@ -205,7 +205,7 @@ class SettingsPage extends StatelessWidget {
               child: Text(
                 'Chatty v1.0.0',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onBackground.withOpacity(0.5),
+                  color: theme.colorScheme.onSurface.withOpacity(0.5),
                 ),
               ),
             ),

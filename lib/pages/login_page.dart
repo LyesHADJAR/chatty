@@ -52,7 +52,7 @@ class LoginPage extends StatelessWidget {
     final theme = Theme.of(context);
     
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -90,7 +90,7 @@ class LoginPage extends StatelessWidget {
                 Text(
                   'Sign in to continue',
                   style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onBackground.withOpacity(0.7),
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
                   ),
                 ),
                 
@@ -152,7 +152,7 @@ class LoginPage extends StatelessWidget {
                     Text(
                       'Don\'t have an account?',
                       style: TextStyle(
-                        color: theme.colorScheme.onBackground.withOpacity(0.7),
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
                       ),
                     ),
                     TextButton(
@@ -181,7 +181,7 @@ class LoginPage extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
                         'Or continue with',
-                        style: TextStyle(color: theme.colorScheme.onBackground.withOpacity(0.5)),
+                        style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5)),
                       ),
                     ),
                     Expanded(child: Divider(color: theme.dividerTheme.color)),
@@ -211,7 +211,7 @@ class LoginPage extends StatelessWidget {
                     isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode',
                   ),
                   style: TextButton.styleFrom(
-                    foregroundColor: theme.colorScheme.onBackground.withOpacity(0.7),
+                    foregroundColor: theme.colorScheme.onSurface.withOpacity(0.7),
                   ),
                 ),
                 

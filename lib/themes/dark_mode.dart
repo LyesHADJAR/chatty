@@ -5,14 +5,12 @@ import 'package:google_fonts/google_fonts.dart';
 ThemeData darkMode = ThemeData(
   brightness: Brightness.dark,
   colorScheme: ColorScheme.dark(
-    background: const Color(0xFF121212),
     primary: const Color(0xFF5B7FFF), // Lighter Royal Blue for dark mode
     secondary: const Color(0xFF252525),
     tertiary: const Color(0xFF353535),
     surface: const Color(0xFF1E1E1E),
     onPrimary: Colors.white,
     onSecondary: Colors.white,
-    onBackground: Colors.white,
     onSurface: Colors.white,
     error: Colors.red.shade300,
     onError: Colors.white,
@@ -156,14 +154,14 @@ ThemeData darkMode = ThemeData(
   
   // Switch theme
   switchTheme: SwitchThemeData(
-    thumbColor: MaterialStateProperty.resolveWith((states) {
-      if (states.contains(MaterialState.selected)) {
+    thumbColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.selected)) {
         return const Color(0xFF5B7FFF);
       }
       return Colors.grey.shade600;
     }),
-    trackColor: MaterialStateProperty.resolveWith((states) {
-      if (states.contains(MaterialState.selected)) {
+    trackColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.selected)) {
         return const Color(0xFF5B7FFF).withOpacity(0.5);
       }
       return Colors.grey.shade700;
@@ -172,8 +170,8 @@ ThemeData darkMode = ThemeData(
   
   // Checkbox theme
   checkboxTheme: CheckboxThemeData(
-    fillColor: MaterialStateProperty.resolveWith((states) {
-      if (states.contains(MaterialState.selected)) {
+    fillColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.selected)) {
         return const Color(0xFF5B7FFF);
       }
       return Colors.grey.shade600;
@@ -183,8 +181,8 @@ ThemeData darkMode = ThemeData(
   
   // Radio theme
   radioTheme: RadioThemeData(
-    fillColor: MaterialStateProperty.resolveWith((states) {
-      if (states.contains(MaterialState.selected)) {
+    fillColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.selected)) {
         return const Color(0xFF5B7FFF);
       }
       return Colors.grey.shade600;

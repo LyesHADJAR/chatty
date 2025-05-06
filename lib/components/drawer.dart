@@ -22,7 +22,7 @@ class CustomDrawer extends StatelessWidget {
     final theme = Theme.of(context);
     
     return Drawer(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       child: Column(
         children: [
           DrawerHeader(

@@ -185,7 +185,7 @@ class _ChatPageState extends State<ChatPage> {
                 Text(
                   "Send a message to start chatting!",
                   style: theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.onBackground.withOpacity(0.7),
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
                   ),
                 ),
               ],

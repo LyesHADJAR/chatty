@@ -101,14 +101,14 @@ class UserTile extends StatelessWidget {
                     _formatTimestamp(lastMessageTime),
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontSize: 12,
-                      color: theme.colorScheme.onBackground.withOpacity(0.6),
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
                     ),
                   ),
                 const SizedBox(height: 4),
                 Icon(
                   Icons.arrow_forward_ios,
                   size: 16,
-                  color: theme.colorScheme.onBackground.withOpacity(0.5),
+                  color: theme.colorScheme.onSurface.withOpacity(0.5),
                 ),
               ],
             ),

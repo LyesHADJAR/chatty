@@ -43,7 +43,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
         prefixIcon: widget.prefixIcon != null 
           ? Icon(
               widget.prefixIcon,
-              color: theme.colorScheme.onBackground.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
               size: 22,
             ) 
           : null,
@@ -52,7 +52,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
           ? IconButton(
               icon: Icon(
                 _obscureText ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                color: theme.colorScheme.onBackground.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
                 size: 22,
               ),
               onPressed: () {

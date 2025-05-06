@@ -5,14 +5,12 @@ import 'package:google_fonts/google_fonts.dart';
 ThemeData lightMode = ThemeData(
   brightness: Brightness.light,
   colorScheme: ColorScheme.light(
-    background: Colors.white,
     primary: const Color(0xFF4169E1), // Royal Blue
     secondary: Colors.grey.shade200,
     tertiary: Colors.grey.shade300,
     surface: Colors.white,
     onPrimary: Colors.white,
     onSecondary: Colors.black87,
-    onBackground: Colors.black87,
     onSurface: Colors.black87,
     error: Colors.red.shade700,
     onError: Colors.white,
@@ -156,14 +154,14 @@ ThemeData lightMode = ThemeData(
   
   // Switch theme
   switchTheme: SwitchThemeData(
-    thumbColor: MaterialStateProperty.resolveWith((states) {
-      if (states.contains(MaterialState.selected)) {
+    thumbColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.selected)) {
         return const Color(0xFF4169E1);
       }
       return Colors.grey.shade400;
     }),
-    trackColor: MaterialStateProperty.resolveWith((states) {
-      if (states.contains(MaterialState.selected)) {
+    trackColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.selected)) {
         return const Color(0xFF4169E1).withOpacity(0.5);
       }
       return Colors.grey.shade300;
@@ -172,8 +170,8 @@ ThemeData lightMode = ThemeData(
   
   // Checkbox theme
   checkboxTheme: CheckboxThemeData(
-    fillColor: MaterialStateProperty.resolveWith((states) {
-      if (states.contains(MaterialState.selected)) {
+    fillColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.selected)) {
         return const Color(0xFF4169E1);
       }
       return Colors.grey.shade300;
@@ -183,8 +181,8 @@ ThemeData lightMode = ThemeData(
   
   // Radio theme
   radioTheme: RadioThemeData(
-    fillColor: MaterialStateProperty.resolveWith((states) {
-      if (states.contains(MaterialState.selected)) {
+    fillColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.selected)) {
         return const Color(0xFF4169E1);
       }
       return Colors.grey.shade300;
