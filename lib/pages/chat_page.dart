@@ -9,9 +9,9 @@ class ChatPage extends StatefulWidget {
   final String recieverEmail;
   final Function toggleTheme;
   final bool isDarkMode;
-  
+
   const ChatPage({
-    super.key, 
+    super.key,
     required this.recieverEmail,
     required this.toggleTheme,
     required this.isDarkMode,
@@ -33,7 +33,7 @@ class _ChatPageState extends State<ChatPage> {
       setState(() {
         _isSending = true;
       });
-      
+
       try {
         await _chatService.sendMessage(
           widget.recieverEmail,
@@ -60,7 +60,7 @@ class _ChatPageState extends State<ChatPage> {
       }
     }
   }
-  
+
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
@@ -74,14 +74,14 @@ class _ChatPageState extends State<ChatPage> {
   String _formatTimestamp(Timestamp timestamp) {
     final DateTime dateTime = timestamp.toDate();
     final now = DateTime.now();
-    
-    if (dateTime.year == now.year && 
-        dateTime.month == now.month && 
+
+    if (dateTime.year == now.year &&
+        dateTime.month == now.month &&
         dateTime.day == now.day) {
       return DateFormat.jm().format(dateTime);
     } else if (dateTime.year == now.year &&
-               dateTime.month == now.month &&
-               dateTime.day == now.day - 1) {
+        dateTime.month == now.month &&
+        dateTime.day == now.day - 1) {
       return 'Yesterday, ${DateFormat.jm().format(dateTime)}';
     } else {
       return DateFormat('MMM d, y • h:mm a').format(dateTime);
@@ -98,15 +98,18 @@ class _ChatPageState extends State<ChatPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          widget.recieverEmail,
-          style: theme.textTheme.titleLarge,
-        ),
+        title: Text(widget.recieverEmail, style: theme.textTheme.titleLarge),
         centerTitle: true,
         elevation: 1,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
         actions: [
           IconButton(
             icon: CircleAvatar(
@@ -120,6 +123,12 @@ class _ChatPageState extends State<ChatPage> {
             ),
             onPressed: () {
               // Show contact info
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Contact info coming soon!'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
             },
           ),
         ],
@@ -127,9 +136,7 @@ class _ChatPageState extends State<ChatPage> {
       body: Column(
         children: [
           // Messages list
-          Expanded(
-            child: _buildMessageList(),
-          ),
+          Expanded(child: _buildMessageList()),
 
           // Message input
           _buildMessageInput(),
@@ -142,17 +149,12 @@ class _ChatPageState extends State<ChatPage> {
   Widget _buildMessageList() {
     final String currentUserEmail = _auth.currentUser!.email!;
     final theme = Theme.of(context);
-    
+
     return StreamBuilder(
-      stream: _chatService.getMessages(
-        currentUserEmail,
-        widget.recieverEmail,
-      ),
+      stream: _chatService.getMessages(currentUserEmail, widget.recieverEmail),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return const Center(child: CircularProgressIndicator());
         }
 
         if (snapshot.hasError) {
@@ -206,7 +208,8 @@ class _ChatPageState extends State<ChatPage> {
             // Show timestamp for first message and when there's a significant time gap
             bool showTimestamp = index == 0;
             if (index > 0) {
-              final prevData = messages[index - 1].data() as Map<String, dynamic>;
+              final prevData =
+                  messages[index - 1].data() as Map<String, dynamic>;
               final prevTimestamp = prevData['timestamp'] as Timestamp;
               final timeDiff = timestamp.seconds - prevTimestamp.seconds;
               if (timeDiff > 300) {
@@ -221,7 +224,7 @@ class _ChatPageState extends State<ChatPage> {
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12, 
+                        horizontal: 12,
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
@@ -237,9 +240,10 @@ class _ChatPageState extends State<ChatPage> {
                     ),
                   ),
                 Row(
-                  mainAxisAlignment: isCurrentUser 
-                    ? MainAxisAlignment.end 
-                    : MainAxisAlignment.start,
+                  mainAxisAlignment:
+                      isCurrentUser
+                          ? MainAxisAlignment.end
+                          : MainAxisAlignment.start,
                   children: [
                     ChatBubble(
                       message: messageText,
@@ -258,7 +262,7 @@ class _ChatPageState extends State<ChatPage> {
   // build message input
   Widget _buildMessageInput() {
     final theme = Theme.of(context);
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
@@ -268,7 +272,7 @@ class _ChatPageState extends State<ChatPage> {
             color: Colors.black.withOpacity(0.05),
             blurRadius: 3,
             offset: const Offset(0, -1),
-          )
+          ),
         ],
       ),
       child: SafeArea(
@@ -285,7 +289,7 @@ class _ChatPageState extends State<ChatPage> {
                 // Future feature: attachments
               },
             ),
-            
+
             // Text field
             Expanded(
               child: Container(
@@ -318,25 +322,27 @@ class _ChatPageState extends State<ChatPage> {
               icon: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: _messageController.text.isEmpty || _isSending
-                      ? Colors.grey.withOpacity(0.5)
-                      : theme.colorScheme.primary,
+                  color:
+                      _messageController.text.isEmpty || _isSending
+                          ? Colors.grey.withOpacity(0.5)
+                          : theme.colorScheme.primary,
                   shape: BoxShape.circle,
                 ),
-                child: _isSending
-                    ? SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(
+                child:
+                    _isSending
+                        ? SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            color: theme.colorScheme.onPrimary,
+                            strokeWidth: 2,
+                          ),
+                        )
+                        : Icon(
+                          Icons.send_rounded,
                           color: theme.colorScheme.onPrimary,
-                          strokeWidth: 2,
+                          size: 16,
                         ),
-                      )
-                    : Icon(
-                        Icons.send_rounded,
-                        color: theme.colorScheme.onPrimary,
-                        size: 16,
-                      ),
               ),
             ),
           ],

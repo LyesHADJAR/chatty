@@ -4,6 +4,12 @@ import 'package:chatty/components/drawer.dart';
 import 'package:chatty/services/chat/chat_service.dart';
 import 'package:chatty/pages/chat_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import'package:chatty/services/chat/group_service.dart';
+import 'package:chatty/components/button.dart';
+import 'package:chatty/models/group.dart';
+import 'package:chatty/pages/create_group_page.dart';
+import 'package:chatty/components/group_tile.dart';
+import 'package:chatty/pages/group_chat_page.dart';
 
 class HomePage extends StatefulWidget {
   final Function toggleTheme;
@@ -31,9 +37,8 @@ class _HomePageState extends State<HomePage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() {
-      // Clear search when switching tabs
       if (_isSearching) {
         setState(() {
           _searchController.clear();
@@ -120,7 +125,11 @@ class _HomePageState extends State<HomePage>
                 ? null
                 : TabBar(
                   controller: _tabController,
-                  tabs: const [Tab(text: 'Chats'), Tab(text: 'Find People')],
+                  tabs: const [
+                    Tab(text: 'Chats'),
+                    Tab(text: 'Find People'),
+                    Tab(text: 'Groups'), // New tab
+                  ],
                   labelStyle: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                     fontFamily: 'Montserrat',
@@ -131,6 +140,7 @@ class _HomePageState extends State<HomePage>
                   ),
                   indicatorSize: TabBarIndicatorSize.label,
                 ),
+
         elevation: 0,
       ),
       drawer: CustomDrawer(
@@ -149,9 +159,116 @@ class _HomePageState extends State<HomePage>
                     : _buildAllUsersSearch(_auth.currentUser!.email!))
                 : TabBarView(
                   controller: _tabController,
-                  children: [_buildUserList(), _buildNewUsersTab()],
+                  children: [
+                    _buildUserList(),
+                    _buildNewUsersTab(),
+                    _buildGroupsTab(),
+                  ],
                 ),
       ),
+    );
+  }
+
+  Widget _buildGroupsTab() {
+    final theme = Theme.of(context);
+    final GroupService _groupService = GroupService();
+
+    return Column(
+      children: [
+        // Add group button
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: CustomButton(
+            text: 'Create New Group',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CreateGroupPage(),
+                ),
+              );
+            },
+            prefixIcon: Icon(
+              Icons.group_add_rounded,
+              color: theme.colorScheme.onPrimary,
+            ),
+          ),
+        ),
+
+        // Group list
+        Expanded(
+          child: StreamBuilder<List<Group>>(
+            stream: _groupService.getUserGroups(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text(
+                    'Error loading groups: ${snapshot.error}',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                );
+              }
+
+              final groups = snapshot.data ?? [];
+
+              if (groups.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.group_rounded,
+                        size: 64,
+                        color: theme.colorScheme.primary.withOpacity(0.5),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        "You're not in any groups yet",
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Create a group to chat with multiple people",
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                itemCount: groups.length,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                itemBuilder: (context, index) {
+                  final group = groups[index];
+
+                  return GroupTile(
+                    group: group,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => GroupChatPage(groupId: group.id),
+                        ),
+                      );
+                    },
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -255,18 +372,14 @@ class _HomePageState extends State<HomePage>
                         Icon(
                           Icons.search,
                           size: 80,
-                          color: theme.colorScheme.onSurface.withOpacity(
-                            0.3,
-                          ),
+                          color: theme.colorScheme.onSurface.withOpacity(0.3),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'Enter an email address to find someone',
                           textAlign: TextAlign.center,
                           style: theme.textTheme.bodyLarge?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(
-                              0.7,
-                            ),
+                            color: theme.colorScheme.onSurface.withOpacity(0.7),
                             fontFamily: 'Montserrat',
                           ),
                         ),
@@ -295,9 +408,7 @@ class _HomePageState extends State<HomePage>
                         child: Text(
                           'No users found',
                           style: theme.textTheme.bodyLarge?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(
-                              0.7,
-                            ),
+                            color: theme.colorScheme.onSurface.withOpacity(0.7),
                             fontFamily: 'Montserrat',
                           ),
                         ),
@@ -335,8 +446,9 @@ class _HomePageState extends State<HomePage>
                               'No user found with email containing "$query"',
                               textAlign: TextAlign.center,
                               style: theme.textTheme.bodyLarge?.copyWith(
-                                color: theme.colorScheme.onSurface
-                                    .withOpacity(0.7),
+                                color: theme.colorScheme.onSurface.withOpacity(
+                                  0.7,
+                                ),
                                 fontFamily: 'Montserrat',
                               ),
                             ),

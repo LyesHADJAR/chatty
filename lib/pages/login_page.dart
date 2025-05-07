@@ -1,50 +1,69 @@
 import 'package:chatty/components/button.dart';
 import 'package:flutter/material.dart';
 import 'package:chatty/components/text_field.dart';
-import 'package:chatty/components/social_button.dart';
 import 'package:chatty/services/auth/auth_service.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   final void Function()? onTap;
   final Function toggleTheme;
   final bool isDarkMode;
   
-  LoginPage({
-    super.key, 
+  const LoginPage({
+    Key? key, 
     this.onTap,
     required this.toggleTheme,
     required this.isDarkMode,
-  });
+  }) : super(key: key);
 
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
 
-  void login(context) async {
-    final authService = AuthService();
+class _LoginPageState extends State<LoginPage> {
+  final TextEditingController _emailOrUsernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
+  bool _isLoggingIn = false;
 
+  void _login() async {
+    if (_emailOrUsernameController.text.isEmpty || _passwordController.text.isEmpty) {
+      _showError('Please enter your username/email and password');
+      return;
+    }
+    
+    setState(() => _isLoggingIn = true);
+    
     try {
-      await authService.signInWithEmailAndPassword(
-        emailController.text, 
-        passwordController.text
+      await _authService.signIn(
+        _emailOrUsernameController.text.trim(),
+        _passwordController.text.trim(),
       );
+      // Login successful - AuthGate will handle navigation
+    } catch (e) {
+      if (mounted) {
+        _showError(e.toString());
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoggingIn = false);
+      }
     }
-    catch(e) {
-      showDialog(
-        context: context, 
-        builder: (context) => AlertDialog(
-          title: const Text('Error'),
-          content: Text(e.toString()),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('OK'),
-            ),
-          ],
-        )
-      );
-    }
+  }
+  
+  void _showError(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -96,11 +115,11 @@ class LoginPage extends StatelessWidget {
                 
                 const SizedBox(height: 40),
                 
-                // Email field
+                // Email/username field
                 CustomTextField(
-                  hintText: 'Email', 
-                  controller: emailController,
-                  prefixIcon: Icons.email_outlined,
+                  hintText: 'Email or Username', 
+                  controller: _emailOrUsernameController,
+                  prefixIcon: Icons.person_outline,
                 ),
                 
                 const SizedBox(height: 16),
@@ -108,7 +127,7 @@ class LoginPage extends StatelessWidget {
                 // Password field
                 CustomTextField(
                   hintText: 'Password',
-                  controller: passwordController,
+                  controller: _passwordController,
                   prefixIcon: Icons.lock_outline,
                   isPassword: true,
                 ),
@@ -119,7 +138,32 @@ class LoginPage extends StatelessWidget {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      // Show forgot password dialog
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Reset Password'),
+                          content: const Text('Please enter your email address to receive a password reset link.'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                // Send password reset email
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Password reset functionality coming soon')),
+                                );
+                              },
+                              child: const Text('Send Link'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                     style: TextButton.styleFrom(
                       padding: EdgeInsets.zero,
                       minimumSize: const Size(50, 30),
@@ -140,7 +184,8 @@ class LoginPage extends StatelessWidget {
                 // Login button
                 CustomButton(
                   text: 'Login',
-                  onTap: () => login(context),
+                  onTap: _isLoggingIn ? null : _login,
+                  isLoading: _isLoggingIn,
                 ),
                 
                 const SizedBox(height: 24),
@@ -156,7 +201,7 @@ class LoginPage extends StatelessWidget {
                       ),
                     ),
                     TextButton(
-                      onPressed: onTap,
+                      onPressed: widget.onTap,
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                       ),
@@ -173,49 +218,22 @@ class LoginPage extends StatelessWidget {
                 
                 const SizedBox(height: 32),
                 
-                // Divider
-                Row(
-                  children: [
-                    Expanded(child: Divider(color: theme.dividerTheme.color)),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'Or continue with',
-                        style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5)),
-                      ),
-                    ),
-                    Expanded(child: Divider(color: theme.dividerTheme.color)),
-                  ],
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Social login button
-                SocialButton(
-                  icon: Icons.android, 
-                  label: 'Google', 
-                  onTap: () {}, 
-                  context: context
-                ),
-                
-                const SizedBox(height: 16),
-                
                 // Theme toggle
                 TextButton.icon(
-                  onPressed: () => toggleTheme(),
+                  onPressed: () => widget.toggleTheme(),
                   icon: Icon(
-                    isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                    widget.isDarkMode ? Icons.light_mode : Icons.dark_mode,
                     size: 18,
                   ),
                   label: Text(
-                    isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+                    widget.isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode',
                   ),
                   style: TextButton.styleFrom(
                     foregroundColor: theme.colorScheme.onSurface.withOpacity(0.7),
                   ),
                 ),
                 
-                const SizedBox(height: 50),
+                const SizedBox(height: 40),
               ],
             ),
           ),
@@ -223,4 +241,4 @@ class LoginPage extends StatelessWidget {
       ),
     );
   }
-}
+} 

@@ -1,72 +1,117 @@
 import 'package:chatty/components/button.dart';
 import 'package:flutter/material.dart';
 import 'package:chatty/components/text_field.dart';
-import 'package:chatty/components/social_button.dart';
 import 'package:chatty/services/auth/auth_service.dart';
 
-class RegisterPage extends StatelessWidget {
+class RegisterPage extends StatefulWidget {
   final void Function()? onTap;
+  final Function toggleTheme;
+  final bool isDarkMode;
 
-  RegisterPage({super.key, this.onTap});
+  const RegisterPage({
+    Key? key, 
+    this.onTap,
+    required this.toggleTheme,
+    required this.isDarkMode,
+  }) : super(key: key);
 
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController =
-      TextEditingController();
+  @override
+  State<RegisterPage> createState() => _RegisterPageState();
+}
 
-  void register(BuildContext context) async {
-    // get auth service
-    final auth = AuthService();
-    if (passwordController.text == confirmPasswordController.text) {
-      try {
-        await auth.signUpWithEmailAndPassword(
-          emailController.text,
-          passwordController.text,
-        );
-        // AuthGate will automatically handle the navigation
-      } catch (e) {
-        // show error message
-        showDialog(
-          context: context, 
-          builder: (context) => AlertDialog(
-            title: const Text('Error'),
-            content: Text(e.toString()),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
-      }
-    } else {
-      // show error message
-      showDialog(
-        context: context, 
-        builder: (context) => AlertDialog(
-          title: const Text('Error'),
-          content: const Text('Passwords do not match'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('OK'),
-            ),
-          ],
-        ),
+class _RegisterPageState extends State<RegisterPage> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  
+  final AuthService _authService = AuthService();
+  bool _isRegistering = false;
+  String? _usernameError;
+
+  // Check username availability with debounce
+  Future<void> _checkUsername(String username) async {
+    if (username.length < 3) {
+      setState(() => _usernameError = 'Username must be at least 3 characters');
+      return;
+    }
+    
+    // Check for valid characters (alphanumeric and underscore only)
+    if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(username)) {
+      setState(() => _usernameError = 'Only letters, numbers, and underscores allowed');
+      return;
+    }
+    
+    try {
+      bool isAvailable = await _authService.isUsernameAvailable(username);
+      setState(() => _usernameError = isAvailable ? null : 'Username already taken');
+    } catch (e) {
+      setState(() => _usernameError = 'Error checking username');
+    }
+  }
+
+  void _register() async {
+    // Validate fields
+    if (_emailController.text.isEmpty || 
+        _usernameController.text.isEmpty ||
+        _passwordController.text.isEmpty ||
+        _confirmPasswordController.text.isEmpty) {
+      _showError('Please fill in all fields');
+      return;
+    }
+    
+    if (_usernameError != null) {
+      _showError('Please fix the username error');
+      return;
+    }
+    
+    if (_passwordController.text != _confirmPasswordController.text) {
+      _showError('Passwords do not match');
+      return;
+    }
+    
+    setState(() => _isRegistering = true);
+    
+    try {
+      await _authService.signUp(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+        _usernameController.text.trim(),
       );
-    } 
+      // Registration successful - AuthGate will handle navigation
+    } catch (e) {
+      if (mounted) {
+        _showError(e.toString());
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isRegistering = false);
+      }
+    }
+  }
+  
+  void _showError(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -74,87 +119,152 @@ class RegisterPage extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SizedBox(height: 50),
+                const SizedBox(height: 40),
 
-                // App logo or icon could go here
+                // App logo
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.person_add_rounded,
+                    size: 64,
+                    color: theme.colorScheme.onPrimary,
+                  ),
+                ),
+                
+                const SizedBox(height: 24),
+
                 Text(
                   'Create Account',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  style: theme.textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                
+                const SizedBox(height: 8),
+                
+                Text(
+                  'Choose a unique username',
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
                   ),
                 ),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 32),
 
+                // Email field
                 CustomTextField(
                   hintText: 'Email',
-                  controller: emailController,
+                  controller: _emailController,
                   prefixIcon: Icons.email_outlined,
+                  keyboardType: TextInputType.emailAddress,
                 ),
 
-                const SizedBox(height: 15),
-
+                const SizedBox(height: 12),
+                
+                // Username field
                 CustomTextField(
-                  hintText: 'Password',
-                  controller: passwordController,
-                  prefixIcon: Icons.lock_outline,
+                  hintText: 'Username',
+                  controller: _usernameController,
+                  prefixIcon: Icons.person_outline,
+                  onChanged: (value) => _checkUsername(value),
                 ),
-
-                const SizedBox(height: 15),
-
-                CustomTextField(
-                  hintText: 'Confirm Password',
-                  controller: confirmPasswordController,
-                  prefixIcon: Icons.lock_outline,
-                ),
-
-                const SizedBox(height: 30),
-                CustomButton(text: 'Register', onTap: () => register(context)),
-
-                const SizedBox(height: 25),
-
-                GestureDetector(
-                  onTap: onTap,
-                  child: Text(
-                    'Already have an account? Login',
-                    style: TextStyle(
-                      color: Theme.of(context).primaryColor,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 40),
-
-                Row(
-                  children: [
-                    Expanded(child: Divider(color: Colors.grey.shade400)),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                
+                // Username error message
+                if (_usernameError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8, left: 12),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
                       child: Text(
-                        'Or register with',
-                        style: TextStyle(color: Colors.grey.shade600),
+                        _usernameError!,
+                        style: TextStyle(
+                          color: theme.colorScheme.error,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
-                    Expanded(child: Divider(color: Colors.grey.shade400)),
-                  ],
+                  ),
+
+                const SizedBox(height: 12),
+
+                // Password field
+                CustomTextField(
+                  hintText: 'Password',
+                  controller: _passwordController,
+                  prefixIcon: Icons.lock_outline,
+                  isPassword: true,
                 ),
 
-                const SizedBox(height: 25),
+                const SizedBox(height: 12),
 
+                // Confirm password field
+                CustomTextField(
+                  hintText: 'Confirm Password',
+                  controller: _confirmPasswordController,
+                  prefixIcon: Icons.lock_outline,
+                  isPassword: true,
+                ),
+
+                const SizedBox(height: 24),
+                
+                // Register button
+                CustomButton(
+                  text: 'Register',
+                  onTap: _isRegistering ? null : _register,
+                  isLoading: _isRegistering,
+                ),
+
+                const SizedBox(height: 20),
+
+                // Login link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SocialButton(
-                      icon: Icons.android,
-                      label: 'Google',
-                      onTap: () {},
-                      context: context,
+                    Text(
+                      'Already have an account?',
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: widget.onTap,
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                      ),
+                      child: Text(
+                        'Login',
+                        style: TextStyle(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 50),
+                const SizedBox(height: 24),
+                
+                // Theme toggle
+                TextButton.icon(
+                  onPressed: () => widget.toggleTheme(),
+                  icon: Icon(
+                    widget.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                    size: 18,
+                  ),
+                  label: Text(
+                    widget.isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: theme.colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
+
+                const SizedBox(height: 40),
               ],
             ),
           ),

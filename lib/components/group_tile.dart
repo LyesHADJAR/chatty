@@ -1,27 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:chatty/models/group.dart';
+import 'package:chatty/components/profile_image.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:chatty/components/profile_image.dart';
 
-class UserTile extends StatelessWidget {
-  final String text;
-  final String? subtitle;
+class GroupTile extends StatelessWidget {
+  final Group group;
   final void Function()? onTap;
-  final bool isNewContact;
-  final Timestamp? lastMessageTime;
-  final String? profileImageUrl;
-  final Widget? trailing;  // Added custom trailing widget
   
-  const UserTile({
-    super.key,
-    required this.text,
-    this.subtitle,
+  const GroupTile({
+    Key? key,
+    required this.group,
     this.onTap,
-    this.isNewContact = false,
-    this.lastMessageTime,
-    this.profileImageUrl,
-    this.trailing,  // New parameter
-  });
+  }) : super(key: key);
   
   String _formatTimestamp(Timestamp? timestamp) {
     if (timestamp == null) return '';
@@ -64,37 +55,76 @@ class UserTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           child: ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            leading: ProfileImage(
-              imageUrl: profileImageUrl,
-              fallbackText: text,
-              size: 52,
-              backgroundColor: isNewContact 
-                  ? theme.colorScheme.secondary 
-                  : theme.colorScheme.primary,
+            leading: Stack(
+              children: [
+                ProfileImage(
+                  imageUrl: group.imageUrl,
+                  fallbackText: group.name,
+                  size: 52,
+                  backgroundColor: theme.colorScheme.secondary,
+                ),
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: theme.brightness == Brightness.light 
+                            ? Colors.white 
+                            : theme.colorScheme.surface,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Text(
+                      group.memberCount.toString(),
+                      style: TextStyle(
+                        color: theme.colorScheme.onPrimary,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
             title: Text(
-              text,
+              group.name,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
               overflow: TextOverflow.ellipsis,
             ),
-            subtitle: subtitle != null 
-                ? Text(
-                    subtitle!,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      overflow: TextOverflow.ellipsis,
-                    ),
+            subtitle: group.lastMessage != null 
+                ? RichText(
                     maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    text: TextSpan(
+                      children: [
+                        if (group.lastMessageSender != null)
+                          TextSpan(
+                            text: '${group.lastMessageSender}: ',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        TextSpan(
+                          text: group.lastMessage,
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
                   ) 
                 : null,
-            trailing: trailing ?? Column(
+            trailing: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                if (lastMessageTime != null)
+                if (group.lastMessageTime != null)
                   Text(
-                    _formatTimestamp(lastMessageTime),
+                    _formatTimestamp(group.lastMessageTime),
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontSize: 12,
                       color: theme.colorScheme.onSurface.withOpacity(0.6),
