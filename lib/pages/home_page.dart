@@ -467,19 +467,27 @@ class _HomePageState extends State<HomePage>
                       padding: const EdgeInsets.only(top: 8),
                       itemBuilder: (context, index) {
                         final userData = filteredUsers[index];
-                        final String email = userData['email'] ?? 'No email';
 
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: UserTile(
-                            text: email,
+                            text:
+                                userData['username'] ??
+                                userData['email'] ??
+                                'No username',
+                            subtitle: userData['email'] ?? '',
+                            profileImageUrl: userData['profileImageUrl'],
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder:
                                       (context) => ChatPage(
-                                        recieverEmail: email,
+                                        recieverEmail: userData['email'],
+                                        recieverUsername:
+                                            userData['username'], // Add this
+                                        recieverProfileImageUrl:
+                                            userData['profileImageUrl'], // Add this
                                         isDarkMode: widget.isDarkMode,
                                         toggleTheme: widget.toggleTheme,
                                       ),

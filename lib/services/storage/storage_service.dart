@@ -93,7 +93,7 @@ class StorageService {
     }
   }
 
-  // Upload profile image
+  // Add this when debugging upload issues to get more information
   Future<String> uploadProfileImage(File file) async {
     try {
       final user = _auth.currentUser;
@@ -101,27 +101,53 @@ class StorageService {
         throw Exception('User not logged in');
       }
 
+      print("Starting profile image upload for user ${user.uid}");
+
       // Compress the image before uploading
       final compressedFile = await compressImage(file);
+      print("Image compressed successfully");
 
       // Create file reference
       final fileName =
           'profile_${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final ref = _storage.ref().child('profile_images').child(fileName);
+      print("Storage reference created: ${ref.fullPath}");
 
-      // Upload file
-      await ref.putFile(compressedFile ?? file);
+      // Upload file with metadata
+      UploadTask uploadTask = ref.putFile(
+        compressedFile ?? file,
+        SettableMetadata(contentType: 'image/jpeg'),
+      );
+
+      // Monitor upload progress
+      uploadTask.snapshotEvents.listen(
+        (TaskSnapshot snapshot) {
+          print(
+            'Upload progress: ${(snapshot.bytesTransferred / snapshot.totalBytes) * 100}%',
+          );
+        },
+        onError: (e) {
+          print("Upload error: $e");
+        },
+      );
+
+      // Wait for upload to complete
+      await uploadTask;
+      print("File uploaded successfully");
 
       // Get download URL
       final url = await ref.getDownloadURL();
+      print("Download URL obtained: $url");
 
       // Update user document
       await _firestore.collection('Users').doc(user.uid).update({
         'profileImageUrl': url,
       });
+      print("User document updated with new profile image URL");
 
       return url;
     } catch (e) {
+      print("Profile image upload failed with error: $e");
       throw Exception('Failed to upload image: $e');
     }
   }

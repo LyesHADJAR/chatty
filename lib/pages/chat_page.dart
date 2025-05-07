@@ -1,4 +1,5 @@
 import 'package:chatty/components/chat_bubble.dart';
+import 'package:chatty/components/profile_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -7,12 +8,16 @@ import 'package:intl/intl.dart';
 
 class ChatPage extends StatefulWidget {
   final String recieverEmail;
+  final String? recieverUsername;  
+  final String? recieverProfileImageUrl;  
   final Function toggleTheme;
   final bool isDarkMode;
 
   const ChatPage({
     super.key,
     required this.recieverEmail,
+    this.recieverUsername,
+    this.recieverProfileImageUrl,
     required this.toggleTheme,
     required this.isDarkMode,
   });
@@ -101,7 +106,23 @@ class _ChatPageState extends State<ChatPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.recieverEmail, style: theme.textTheme.titleLarge),
+        title: Row(
+        children: [
+          // Display profile image if available
+          ProfileImage(
+            imageUrl: widget.recieverProfileImageUrl,
+            fallbackText: widget.recieverUsername ?? widget.recieverEmail,
+            size: 36,
+          ),
+          const SizedBox(width: 8),
+          // Show username if available, otherwise fall back to email
+          Text(
+            widget.recieverUsername ?? widget.recieverEmail,
+            style: theme.textTheme.titleLarge,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
         centerTitle: true,
         elevation: 1,
         leading: IconButton(
