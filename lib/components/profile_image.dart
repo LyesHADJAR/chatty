@@ -1,76 +1,89 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cached_network_image/cached_network_image.dart'; // Add this package
 
 class ProfileImage extends StatelessWidget {
   final String? imageUrl;
   final String fallbackText;
   final double size;
-  final Color? backgroundColor;
-  final VoidCallback? onTap;
   
   const ProfileImage({
     Key? key,
     this.imageUrl,
     required this.fallbackText,
-    this.size = 52,
-    this.backgroundColor,
-    this.onTap,
+    this.size = 40, required Color backgroundColor,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final defaultColor = backgroundColor ?? theme.colorScheme.primary;
     
-    Widget child;
-    
+    // Check if we have a valid image URL
     if (imageUrl != null && imageUrl!.isNotEmpty) {
-      child = CachedNetworkImage(
-        imageUrl: imageUrl!,
-        fit: BoxFit.cover,
-        placeholder: (context, url) => CircularProgressIndicator(
-          strokeWidth: 2,
-          color: theme.colorScheme.onPrimary,
-        ),
-        errorWidget: (context, url, error) => Text(
-          fallbackText.isNotEmpty ? fallbackText.substring(0, 1).toUpperCase() : '?',
-          style: TextStyle(
-            color: theme.colorScheme.onPrimary,
-            fontWeight: FontWeight.bold,
-            fontSize: size * 0.4,
-          ),
+      // Use CachedNetworkImage for better performance
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(size / 2),
+        child: CachedNetworkImage(
+          imageUrl: imageUrl!,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => _buildPlaceholder(theme),
+          errorWidget: (context, url, error) => _buildFallback(theme),
         ),
       );
     } else {
-      child = Text(
-        fallbackText.isNotEmpty ? fallbackText.substring(0, 1).toUpperCase() : '?',
-        style: TextStyle(
-          color: theme.colorScheme.onPrimary,
-          fontWeight: FontWeight.bold,
-          fontSize: size * 0.4,
-        ),
-      );
+      // Show fallback avatar
+      return _buildFallback(theme);
     }
-    
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: defaultColor,
-          shape: BoxShape.circle,
-          image: imageUrl != null && imageUrl!.isNotEmpty
-              ? DecorationImage(
-                  image: CachedNetworkImageProvider(imageUrl!),
-                  fit: BoxFit.cover,
-                )
-              : null,
+  }
+  
+  // Placeholder widget while loading
+  Widget _buildPlaceholder(ThemeData theme) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withOpacity(0.2),
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: SizedBox(
+          width: size / 3,
+          height: size / 3,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: theme.colorScheme.primary,
+          ),
         ),
-        child: imageUrl != null && imageUrl!.isNotEmpty
-            ? null  // No child if we have an image as decoration
-            : Center(child: child),
       ),
     );
   }
-}
+  
+  // Fallback avatar with initials
+  Widget _buildFallback(ThemeData theme) {
+    final String initials = fallbackText
+        .split(' ')
+        .map((part) => part.isNotEmpty ? part[0].toUpperCase() : '')
+        .take(2)
+        .join('');
+    
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary,
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Text(
+          initials,
+          style: TextStyle(
+            color: theme.colorScheme.onPrimary,
+            fontSize: size / 2.5,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+} 

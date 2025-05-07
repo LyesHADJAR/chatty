@@ -8,8 +8,8 @@ import 'package:intl/intl.dart';
 
 class ChatPage extends StatefulWidget {
   final String recieverEmail;
-  final String? recieverUsername;  
-  final String? recieverProfileImageUrl;  
+  final String? recieverUsername;
+  final String? recieverProfileImageUrl;
   final Function toggleTheme;
   final bool isDarkMode;
 
@@ -107,22 +107,24 @@ class _ChatPageState extends State<ChatPage> {
     return Scaffold(
       appBar: AppBar(
         title: Row(
-        children: [
-          // Display profile image if available
-          ProfileImage(
-            imageUrl: widget.recieverProfileImageUrl,
-            fallbackText: widget.recieverUsername ?? widget.recieverEmail,
-            size: 36,
-          ),
-          const SizedBox(width: 8),
-          // Show username if available, otherwise fall back to email
-          Text(
-            widget.recieverUsername ?? widget.recieverEmail,
-            style: theme.textTheme.titleLarge,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ProfileImage(
+              imageUrl: widget.recieverProfileImageUrl,
+              fallbackText: widget.recieverUsername ?? widget.recieverEmail,
+              size: 36,
+              backgroundColor: theme.colorScheme.primary,
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                widget.recieverUsername ?? widget.recieverEmail,
+                style: theme.textTheme.titleLarge,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
         centerTitle: true,
         elevation: 1,
         leading: IconButton(

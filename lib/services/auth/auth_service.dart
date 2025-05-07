@@ -1,3 +1,4 @@
+import 'package:chatty/services/storage/storage_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:chatty/models/chat_user.dart';
@@ -68,41 +69,33 @@ class AuthService {
   }
 
   // Sign up with email, password and username
-  Future<UserCredential> signUp(
-    String email,
-    String password,
-    String username,
-  ) async {
-    try {
-      // Check if username is available
-      bool isAvailable = await isUsernameAvailable(username);
-      if (!isAvailable) {
-        throw Exception('Username already taken');
-      }
-
-      // Create user with email and password
-      UserCredential userCredential = await _auth
-          .createUserWithEmailAndPassword(email: email, password: password);
-
-      final uid = userCredential.user!.uid;
-
-      // Register the username
-      await registerUsername(uid, username);
-
-      // Save user data
-      await _firestore.collection("Users").doc(uid).set({
-        "uid": uid,
-        "email": email,
-        "username": username,
-        "isVerified": false,
-        "createdAt": FieldValue.serverTimestamp(),
-      });
-
-      return userCredential;
-    } on FirebaseAuthException catch (e) {
-      throw Exception('Failed to sign up: $e');
-    }
+  Future<UserCredential> signUp(String email, String password, String username) async {
+  try {
+    UserCredential cred = await _auth.createUserWithEmailAndPassword(
+      email: email, 
+      password: password,
+    );
+    
+    // Generate initial avatar
+    final storageService = StorageService();
+    final avatarUrl = storageService.generateAvatarUrl(username, email);
+    
+    // Save the user to database
+    _firestore.collection('Users').doc(cred.user!.uid).set({
+      'uid': cred.user!.uid,
+      'email': email,
+      'username': username,
+      'profileImageUrl': avatarUrl,
+      'createdAt': Timestamp.now(),
+    });
+    
+    return cred;
+  } on FirebaseAuthException catch (e) {
+    throw Exception(e.message);
   }
+}
+
+
 
   // Update username
   Future<void> updateUsername(String newUsername) async {

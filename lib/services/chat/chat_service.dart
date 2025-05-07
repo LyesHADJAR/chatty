@@ -27,60 +27,78 @@ class ChatService {
   }
 
   // Get users that the current user has chatted with
-  Stream<List<ChatUser>> getChatUsers() {
-    final currentUserEmail = _auth.currentUser?.email;
-    if (currentUserEmail == null) {
-      return Stream.value([]);
-    }
-
-    return _firestore
-        .collection("chat_rooms")
-        .where('participants', arrayContains: currentUserEmail)
-        .snapshots()
-        .asyncMap((snapshot) async {
-          List<ChatUser> chatUsers = [];
-
-          for (var doc in snapshot.docs) {
-            String chatRoomId = doc.id;
-            List<String> emails = chatRoomId.split('_');
-
-            if (emails.length == 2) {
-              // Get the latest message for this chat
-              QuerySnapshot messagesSnapshot =
-                  await _firestore
-                      .collection("chat_rooms")
-                      .doc(chatRoomId)
-                      .collection("messages")
-                      .orderBy("timestamp", descending: true)
-                      .limit(1)
-                      .get();
-
-              String lastMessage = "";
-              Timestamp? timestamp;
-
-              if (messagesSnapshot.docs.isNotEmpty) {
-                var messageData =
-                    messagesSnapshot.docs.first.data() as Map<String, dynamic>;
-                lastMessage = messageData['message'] ?? "";
-                timestamp = messageData['timestamp'] as Timestamp?;
-              }
-
-              chatUsers.add(
-                ChatUser(
-                  senderEmail: emails[0],
-                  receiverEmail: emails[1],
-                  lastMessage: lastMessage,
-                  timestamp: timestamp ?? Timestamp.now(),
-                ),
-              );
-            }
-          }
-
-          // Sort by most recent message
-          chatUsers.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-          return chatUsers;
-        });
+  // Update the getChatUsers method to include usernames
+Stream<List<ChatUser>> getChatUsers() {
+  final currentUser = _auth.currentUser;
+  if (currentUser == null) {
+    return Stream.value([]);
   }
+
+  return _firestore
+      .collection("chat_rooms")
+      .where('participants', arrayContains: currentUser.email)
+      .snapshots()
+      .asyncMap((snapshot) async {
+        List<ChatUser> chatUsers = [];
+
+        for (var doc in snapshot.docs) {
+          String chatRoomId = doc.id;
+          List<String> emails = chatRoomId.split('_');
+          
+          if (emails.length == 2) {
+            // Determine which email belongs to the other user
+            final otherUserEmail = emails[0] == currentUser.email ? emails[1] : emails[0];
+            
+            // Get the other user's details from Users collection
+            final userQuery = await _firestore
+                .collection('Users')
+                .where('email', isEqualTo: otherUserEmail)
+                .limit(1)
+                .get();
+            
+            String username = otherUserEmail; // Default to email if username not found
+            String? profileImageUrl;
+            
+            if (userQuery.docs.isNotEmpty) {
+              final userData = userQuery.docs.first.data();
+              username = userData['username'] ?? otherUserEmail;
+              profileImageUrl = userData['profileImageUrl'];
+            }
+            
+            // Get the latest message for this chat
+            final messagesSnapshot = await _firestore
+                .collection("chat_rooms")
+                .doc(chatRoomId)
+                .collection("messages")
+                .orderBy("timestamp", descending: true)
+                .limit(1)
+                .get();
+            
+            String lastMessage = "";
+            Timestamp? timestamp;
+            
+            if (messagesSnapshot.docs.isNotEmpty) {
+              var messageData = messagesSnapshot.docs.first.data();
+              lastMessage = messageData['message'] ?? "";
+              timestamp = messageData['timestamp'] as Timestamp?;
+            }
+            
+            chatUsers.add(ChatUser(
+              senderEmail: emails[0],
+              receiverEmail: emails[1],
+              lastMessage: lastMessage,
+              timestamp: timestamp ?? Timestamp.now(),
+              username: username,
+              profileImageUrl: profileImageUrl,
+            ));
+          }
+        }
+        
+        // Sort by most recent message
+        chatUsers.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+        return chatUsers;
+      });
+}
 
   // SEND MESSAGE
   Future<void> sendMessage(String receiverEmail, String message) async {
@@ -187,17 +205,20 @@ class Message {
   }
 }
 
-// ChatUser model for displaying in the chat list
 class ChatUser {
   final String senderEmail;
   final String receiverEmail;
   final String lastMessage;
   final Timestamp timestamp;
-
+  final String username;  
+  final String? profileImageUrl;
+  
   ChatUser({
     required this.senderEmail,
     required this.receiverEmail,
     required this.lastMessage,
     required this.timestamp,
+    required this.username,
+    this.profileImageUrl,
   });
 }

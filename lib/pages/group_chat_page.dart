@@ -123,7 +123,7 @@ class _GroupChatPageState extends State<GroupChatPage> {
                 ProfileImage(
                   imageUrl: group.imageUrl,
                   fallbackText: group.name,
-                  size: 36,
+                  size: 36, backgroundColor: theme.colorScheme.secondary,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -284,7 +284,7 @@ class _GroupChatPageState extends State<GroupChatPage> {
                                     child: ProfileImage(
                                       imageUrl: message.senderImageUrl,
                                       fallbackText: message.senderName,
-                                      size: 30,
+                                      size: 30, backgroundColor: theme.colorScheme.secondary,
                                     ),
                                   )
                                 else if (!isCurrentUser)

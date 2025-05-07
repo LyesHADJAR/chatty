@@ -723,6 +723,7 @@ class _HomePageState extends State<HomePage>
     );
   }
 
+  // Update the _buildUserList method to use username instead of email
   Widget _buildUserList() {
     final currentUserEmail = _auth.currentUser?.email;
     final theme = Theme.of(context);
@@ -784,11 +785,12 @@ class _HomePageState extends State<HomePage>
             return Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: UserTile(
-                text: email,
+                text: chatUser.username, // Use username instead of email
                 subtitle:
                     chatUser.lastMessage.isNotEmpty
                         ? chatUser.lastMessage
                         : 'Start a conversation',
+                profileImageUrl: chatUser.profileImageUrl, // Add profile image
                 onTap: () {
                   Navigator.push(
                     context,
@@ -796,6 +798,10 @@ class _HomePageState extends State<HomePage>
                       builder:
                           (context) => ChatPage(
                             recieverEmail: email,
+                            recieverUsername:
+                                chatUser.username, // Pass username
+                            recieverProfileImageUrl:
+                                chatUser.profileImageUrl, // Pass profile image
                             isDarkMode: widget.isDarkMode,
                             toggleTheme: widget.toggleTheme,
                           ),

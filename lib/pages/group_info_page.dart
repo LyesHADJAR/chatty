@@ -6,7 +6,6 @@ import 'package:chatty/services/storage/storage_service.dart';
 import 'package:chatty/models/group.dart';
 import 'package:chatty/models/chat_user.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 class GroupInfoPage extends StatefulWidget {
@@ -69,33 +68,33 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
     }
   }
 
-  void _changeGroupImage(Group group) async {
+  void _changeGroupAvatar(Group group) async {
+    setState(() => _isLoading = true);
+    
     try {
-      final imageFile = await _storageService.pickImage(ImageSource.gallery);
-      if (imageFile != null) {
-        final croppedFile = await _storageService.cropImage(imageFile, context);
-        if (croppedFile != null) {
-          setState(() => _isLoading = true);
+      // Generate a new avatar URL with a random color
+      // We'll use the group name for consistent initials
+      final String avatarUrl = _storageService.generateAvatarUrl(
+        group.name, 
+        null, 
+        _storageService.getRandomColor(DateTime.now().toString())
+      );
 
-          // Create a method in your StorageService for uploading group images
-          final imageUrl = await _storageService.uploadGroupImage(croppedFile);
+      // Update the group with the new avatar URL
+      await _groupService.updateGroupInfo(
+        groupId: widget.groupId,
+        imageUrl: avatarUrl,
+      );
 
-          await _groupService.updateGroupInfo(
-            groupId: widget.groupId,
-            imageUrl: imageUrl,
-          );
-
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Group image updated')),
-            );
-          }
-        }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Group avatar updated')),
+        );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update group image: $e')),
+          SnackBar(content: Text('Failed to update group avatar: $e')),
         );
       }
     } finally {
@@ -129,8 +128,6 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
   void _showRemoveMemberDialog(Group group, ChattyUser user) {
     final currentUserId = _auth.currentUser?.uid;
     final isCurrentUser = user.uid == currentUserId;
-    final isAdmin = group.isUserAdmin(currentUserId ?? '');
-    final isMemberAdmin = group.isUserAdmin(user.uid);
 
     showDialog(
       context: context,
@@ -303,14 +300,14 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
                               GestureDetector(
                                 onTap:
                                     isAdmin
-                                        ? () => _changeGroupImage(group)
+                                        ? () => _changeGroupAvatar(group)
                                         : null,
                                 child: Stack(
                                   children: [
                                     ProfileImage(
                                       imageUrl: group.imageUrl,
                                       fallbackText: group.name,
-                                      size: 120,
+                                      size: 120, backgroundColor: theme.colorScheme.primary,
                                     ),
                                     if (isAdmin)
                                       Positioned(
@@ -327,7 +324,7 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
                                             ),
                                           ),
                                           child: Icon(
-                                            Icons.camera_alt,
+                                            Icons.color_lens,
                                             size: 20,
                                             color: theme.colorScheme.onPrimary,
                                           ),
@@ -432,7 +429,7 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
 
                         const SizedBox(height: 8),
 
-                        // Members list
+                        // Members list (unchanged)
                         FutureBuilder<List<ChattyUser>>(
                           future: Future.wait(
                             group.members.map((memberId) async {
@@ -493,7 +490,7 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
                                   leading: ProfileImage(
                                     imageUrl: member.profileImageUrl,
                                     fallbackText: member.username,
-                                    size: 40,
+                                    size: 40, backgroundColor: theme.colorScheme.primary,
                                   ),
                                   title: Row(
                                     children: [
@@ -666,7 +663,7 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
   }
 }
 
-// Add Members Dialog
+// Add Members Dialog (unchanged)
 class AddMembersDialog extends StatefulWidget {
   final String groupId;
   final List<ChattyUser> availableUsers;
@@ -796,7 +793,7 @@ class _AddMembersDialogState extends State<AddMembersDialog> {
                             leading: ProfileImage(
                               imageUrl: user.profileImageUrl,
                               fallbackText: user.username,
-                              size: 40,
+                              size: 40, backgroundColor: theme.colorScheme.primary,
                             ),
                             title: Text(user.username),
                             subtitle: Text(user.email),

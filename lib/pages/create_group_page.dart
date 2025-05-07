@@ -88,10 +88,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
     try {
       final imageFile = await _storageService.pickImage(ImageSource.gallery);
       if (imageFile != null) {
-        final croppedFile = await _storageService.cropImage(imageFile, context);
-        if (croppedFile != null) {
-          setState(() => _groupImageFile = croppedFile);
-        }
+          setState(() => _groupImageFile = imageFile);
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -293,7 +290,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                                       ProfileImage(
                                         imageUrl: user.profileImageUrl,
                                         fallbackText: user.username,
-                                        size: 50,
+                                        size: 50, backgroundColor: theme.colorScheme.primary,
                                       ),
                                       Positioned(
                                         top: -4,

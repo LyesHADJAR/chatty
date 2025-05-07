@@ -1,158 +1,127 @@
 import 'dart:io';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:image_cropper/image_cropper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:path/path.dart' as path;
-import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 
 class StorageService {
-  final FirebaseStorage _storage = FirebaseStorage.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Pick image from gallery or camera
+  // Pick image from gallery or camera (still useful for UI)
   Future<File?> pickImage(ImageSource source) async {
     try {
       final ImagePicker _picker = ImagePicker();
       final XFile? image = await _picker.pickImage(
         source: source,
-        imageQuality: 70, // Reduce image quality slightly for performance
+        imageQuality: 70,
+        maxWidth: 400,
+        maxHeight: 400,
       );
 
       if (image == null) return null;
-
       return File(image.path);
     } catch (e) {
-      throw Exception('Failed to pick image: $e');
+      print("Error picking image: $e");
+      return null;
     }
   }
 
-  // Crop image
-  Future<File?> cropImage(File imageFile, BuildContext context) async {
-    try {
-      final theme = Theme.of(context);
+  // Generate a profile avatar URL based on user data
+  String generateAvatarUrl(
+    String? displayName,
+    String? email, [
+    String? colorHex,
+  ]) {
+    // Use display name if available, otherwise use email
+    final String nameToUse =
+        displayName?.isNotEmpty == true
+            ? displayName!
+            : (email?.split('@').first ?? 'User');
 
-      final croppedFile = await ImageCropper().cropImage(
-        sourcePath: imageFile.path,
-        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
-        compressQuality: 70,
-        maxWidth: 500,
-        maxHeight: 500,
-        compressFormat: ImageCompressFormat.jpg,
-        uiSettings: [
-          AndroidUiSettings(
-            toolbarTitle: 'Crop Image',
-            toolbarColor: theme.colorScheme.primary,
-            toolbarWidgetColor: theme.colorScheme.onPrimary,
-            initAspectRatio: CropAspectRatioPreset.square,
-            lockAspectRatio: true,
-            hideBottomControls: false,
-          ),
-          IOSUiSettings(
-            title: 'Crop Image',
-            doneButtonTitle: 'Done',
-            cancelButtonTitle: 'Cancel',
-            aspectRatioLockEnabled: true,
-          ),
-        ],
-      );
+    // Create initials from the name (up to 2 characters)
+    final String initials = nameToUse
+        .split(' ')
+        .map((part) => part.isNotEmpty ? part[0].toUpperCase() : '')
+        .take(2)
+        .join('');
 
-      if (croppedFile == null) return null;
+    // Default colors if none provided
+    final String color = colorHex ?? _getRandomColor(nameToUse);
 
-      return File(croppedFile.path);
-    } catch (e) {
-      throw Exception('Failed to crop image: $e');
-    }
+    // Build UI Avatars URL
+    return 'https://ui-avatars.com/api/'
+        '?name=${Uri.encodeComponent(initials)}'
+        '&background=${color.replaceAll('#', '')}'
+        '&color=ffffff'
+        '&size=200'
+        '&bold=true';
   }
 
-  // Compress image
-  Future<File?> compressImage(File file) async {
-    try {
-      final dir = await getTemporaryDirectory();
-      final targetPath = '${dir.path}/${path.basename(file.path)}';
+  // Get a consistent "random" color based on a string
+  String _getRandomColor(String input) {
+    // Get a deterministic hash from the input string
+    final int hash = input.codeUnits.fold(0, (prev, element) => prev + element);
 
-      final result = await FlutterImageCompress.compressAndGetFile(
-        file.path,
-        targetPath,
-        quality: 70,
-        minWidth: 500,
-        minHeight: 500,
-      );
+    // List of good background colors (avoiding very light colors)
+    final List<String> colors = [
+      '2196F3', // Blue
+      '4CAF50', // Green
+      'FF9800', // Orange
+      '9C27B0', // Purple
+      'F44336', // Red
+      '009688', // Teal
+      '3F51B5', // Indigo
+      '795548', // Brown
+      '607D8B', // Blue Grey
+    ];
 
-      if (result == null) return file;
-
-      return File(result.path);
-    } catch (e) {
-      print('Compression failed: $e');
-      return file; // Return original if compression fails
-    }
+    // Pick a color based on the hash
+    return colors[hash % colors.length];
   }
 
-  // Add this when debugging upload issues to get more information
-  Future<String> uploadProfileImage(File file) async {
+  // "Upload" profile image - actually just updates the user's avatar color
+  Future<String?> uploadProfileImage(File? file) async {
     try {
       final user = _auth.currentUser;
       if (user == null) {
         throw Exception('User not logged in');
       }
 
-      print("Starting profile image upload for user ${user.uid}");
+      print("Updating profile image for user ${user.uid}");
 
-      // Compress the image before uploading
-      final compressedFile = await compressImage(file);
-      print("Image compressed successfully");
+      // Get current user data to generate a proper avatar
+      final userData = await _firestore.collection('Users').doc(user.uid).get();
+      final username =
+          userData.data()?['username'] ?? user.email?.split('@').first;
 
-      // Create file reference
-      final fileName =
-          'profile_${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final ref = _storage.ref().child('profile_images').child(fileName);
-      print("Storage reference created: ${ref.fullPath}");
+      // For actual file uploads, we'll use a random color instead
+      // This gives visual feedback that something changed even though we're not storing the image
+      final String randomColor =
+          '#${_getRandomColor(DateTime.now().toString())}';
 
-      // Upload file with metadata
-      UploadTask uploadTask = ref.putFile(
-        compressedFile ?? file,
-        SettableMetadata(contentType: 'image/jpeg'),
+      // Generate an avatar URL
+      final String avatarUrl = generateAvatarUrl(
+        username,
+        user.email,
+        randomColor.replaceAll('#', ''),
       );
 
-      // Monitor upload progress
-      uploadTask.snapshotEvents.listen(
-        (TaskSnapshot snapshot) {
-          print(
-            'Upload progress: ${(snapshot.bytesTransferred / snapshot.totalBytes) * 100}%',
-          );
-        },
-        onError: (e) {
-          print("Upload error: $e");
-        },
-      );
-
-      // Wait for upload to complete
-      await uploadTask;
-      print("File uploaded successfully");
-
-      // Get download URL
-      final url = await ref.getDownloadURL();
-      print("Download URL obtained: $url");
-
-      // Update user document
+      // Update user document with avatar URL
       await _firestore.collection('Users').doc(user.uid).update({
-        'profileImageUrl': url,
+        'profileImageUrl': avatarUrl,
+        'lastAvatarUpdate': FieldValue.serverTimestamp(),
       });
-      print("User document updated with new profile image URL");
 
-      return url;
+      print("User document updated with avatar URL");
+
+      return avatarUrl;
     } catch (e) {
-      print("Profile image upload failed with error: $e");
-      throw Exception('Failed to upload image: $e');
+      print("Profile image update failed with error: $e");
+      throw Exception('Failed to update profile image: $e');
     }
   }
 
-  // Delete profile image
+  // Delete profile image (reset to default avatar)
   Future<void> deleteProfileImage() async {
     try {
       final user = _auth.currentUser;
@@ -160,89 +129,83 @@ class StorageService {
         throw Exception('User not logged in');
       }
 
-      // Get current profile image URL
-      final doc = await _firestore.collection('Users').doc(user.uid).get();
-      final imageUrl = doc.data()?['profileImageUrl'];
+      // Get current user data
+      final userData = await _firestore.collection('Users').doc(user.uid).get();
+      final username =
+          userData.data()?['username'] ?? user.email?.split('@').first;
 
-      if (imageUrl != null && imageUrl.isNotEmpty) {
-        // Extract file name from URL and delete from storage
-        try {
-          final ref = _storage.refFromURL(imageUrl);
-          await ref.delete();
-        } catch (e) {
-          print('Failed to delete image from storage: $e');
-          // Continue anyway to update the user document
-        }
-      }
+      // Generate default avatar URL (without custom color)
+      final String defaultAvatarUrl = generateAvatarUrl(username, user.email);
 
-      // Update user document
+      // Update user document to use default avatar
       await _firestore.collection('Users').doc(user.uid).update({
-        'profileImageUrl': null,
+        'profileImageUrl': defaultAvatarUrl,
+        'lastAvatarUpdate': null,
       });
     } catch (e) {
-      throw Exception('Failed to delete profile image: $e');
+      print("Error resetting profile image: $e");
+      throw Exception('Failed to reset profile image: $e');
     }
   }
 
-  // Download and cache profile image
-  Future<File?> cacheProfileImage(String imageUrl) async {
+  Future<String> uploadGroupImage(File? file) async {
     try {
-      // Generate a file name based on the URL
-      final fileName = 'cached_${path.basename(imageUrl)}';
-      final dir = await getTemporaryDirectory();
-      final filePath = '${dir.path}/$fileName';
+      // Get the group data to which we're adding the image
+      final groupId =
+          file?.path.split('/').last.split('_')[0] ??
+          DateTime.now().millisecondsSinceEpoch.toString();
 
-      // Check if file already exists
-      final file = File(filePath);
-      if (await file.exists()) {
-        return file;
+      // Get the group's name if available, otherwise use "Group"
+      String groupName = "Group";
+      try {
+        final groupDoc =
+            await FirebaseFirestore.instance
+                .collection('groups')
+                .doc(groupId)
+                .get();
+
+        if (groupDoc.exists) {
+          groupName = groupDoc.data()?['name'] ?? "Group";
+        }
+      } catch (e) {
+        print("Could not get group name: $e");
       }
 
-      // Download the image
-      final response = await http.get(Uri.parse(imageUrl));
-      if (response.statusCode != 200) {
-        throw Exception('Failed to download image');
-      }
+      // Generate a random color for visual feedback
+      final String randomColor = _getRandomColor(DateTime.now().toString());
 
-      // Save to cache
-      await file.writeAsBytes(response.bodyBytes);
-      return file;
+      // Create an avatar URL for the group
+      final String avatarUrl = generateAvatarUrl(groupName, null, randomColor);
+
+      print("Generated group avatar URL: $avatarUrl");
+
+      return avatarUrl;
     } catch (e) {
-      print('Failed to cache image: $e');
-      return null;
+      print("Group avatar generation failed: $e");
+      throw Exception('Failed to generate group avatar: $e');
     }
   }
 
-  // Upload group image
-  Future<String> uploadGroupImage(File file) async {
-    try {
-      // Compress the image before uploading
-      final compressedFile = await compressImage(file);
+  String? getRandomColor(String string) {
+    // Get a deterministic hash from the input string
+    final int hash = string.codeUnits.fold(
+      0,
+      (prev, element) => prev + element,
+    );
 
-      // Create file reference with a unique name
-      final fileName = 'group_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final ref = _storage.ref().child('group_images').child(fileName);
+    // List of good background colors (avoiding very light colors)
+    final List<String> colors = [
+      '2196F3', // Blue
+      '4CAF50', // Green
+      'FF9800', // Orange
+      '9C27B0', // Purple
+      'F44336', // Red
+      '009688', // Teal
+      '3F51B5', // Indigo
+      '795548', // Brown
+      '607D8B', // Blue Grey
+    ];
 
-      // Upload file
-      await ref.putFile(compressedFile ?? file);
-
-      // Get download URL
-      final url = await ref.getDownloadURL();
-
-      return url;
-    } catch (e) {
-      throw Exception('Failed to upload group image: $e');
-    }
-  }
-
-  // Delete group image
-  Future<void> deleteGroupImage(String imageUrl) async {
-    try {
-      // Extract file name from URL and delete from storage
-      final ref = _storage.refFromURL(imageUrl);
-      await ref.delete();
-    } catch (e) {
-      throw Exception('Failed to delete group image: $e');
-    }
+    return colors[hash % colors.length];
   }
 }

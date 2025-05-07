@@ -3,7 +3,6 @@ import 'package:chatty/models/chat_user.dart';
 import 'package:chatty/services/storage/storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:chatty/services/auth/auth_service.dart';
-import 'package:image_picker/image_picker.dart';
 
 class SettingsPage extends StatefulWidget {
   final Function toggleTheme;
@@ -58,13 +57,17 @@ class _SettingsPageState extends State<SettingsPage> {
                     child: Column(
                       children: [
                         GestureDetector(
-                          onTap: _isLoading ? null : () => _showProfileImageOptions(context),
+                          onTap:
+                              _isLoading
+                                  ? null
+                                  : () => _showProfileImageOptions(context),
                           child: Stack(
                             children: [
                               ProfileImage(
                                 imageUrl: user?.profileImageUrl,
-                                fallbackText: user?.username ?? user?.email ?? '',
-                                size: 120,
+                                fallbackText:
+                                    user?.username ?? user?.email ?? '',
+                                size: 120, backgroundColor: theme.colorScheme.primary,
                               ),
                               Positioned(
                                 bottom: 0,
@@ -121,7 +124,10 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                   Card(
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -139,19 +145,26 @@ class _SettingsPageState extends State<SettingsPage> {
                             style: theme.textTheme.bodySmall,
                           ),
                           value: widget.isDarkMode,
-                          onChanged: _isLoading ? null : (_) => widget.toggleTheme(),
+                          onChanged:
+                              _isLoading ? null : (_) => widget.toggleTheme(),
                           secondary: Icon(
-                            widget.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                            widget.isDarkMode
+                                ? Icons.dark_mode
+                                : Icons.light_mode,
                             color: theme.colorScheme.primary,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  
+
                   // Account section
                   Padding(
-                    padding: const EdgeInsets.only(left: 16, top: 24, bottom: 8),
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      top: 24,
+                      bottom: 8,
+                    ),
                     child: Text(
                       'Account',
                       style: theme.textTheme.titleMedium?.copyWith(
@@ -161,7 +174,10 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                   Card(
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -193,11 +209,16 @@ class _SettingsPageState extends State<SettingsPage> {
                               const SnackBar(
                                 content: Text('Profile editing coming soon!'),
                                 duration: Duration(seconds: 2),
-                              )
+                              ),
                             );
                           },
                         ),
-                        Divider(height: 1, thickness: 1, indent: 70, endIndent: 16),
+                        Divider(
+                          height: 1,
+                          thickness: 1,
+                          indent: 70,
+                          endIndent: 16,
+                        ),
                         ListTile(
                           title: Text(
                             'Change Password',
@@ -221,48 +242,56 @@ class _SettingsPageState extends State<SettingsPage> {
                             // Navigate to change password page
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Password change feature coming soon!'),
+                                content: Text(
+                                  'Password change feature coming soon!',
+                                ),
                                 duration: Duration(seconds: 2),
-                              )
+                              ),
                             );
                           },
                         ),
                       ],
                     ),
                   ),
-                  
+
                   // Sign out button with proper spacing
                   Padding(
                     padding: const EdgeInsets.all(24.0),
                     child: TextButton(
-                      onPressed: _isLoading ? null : () {
-                        // Add confirmation dialog for sign out
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('Sign Out'),
-                            content: const Text('Are you sure you want to sign out?'),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                                child: const Text('Cancel'),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                  _authService.signOut();
-                                },
-                                child: const Text('Sign Out'),
-                                style: TextButton.styleFrom(
-                                  foregroundColor: Colors.red,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
+                      onPressed:
+                          _isLoading
+                              ? null
+                              : () {
+                                // Add confirmation dialog for sign out
+                                showDialog(
+                                  context: context,
+                                  builder:
+                                      (context) => AlertDialog(
+                                        title: const Text('Sign Out'),
+                                        content: const Text(
+                                          'Are you sure you want to sign out?',
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: const Text('Cancel'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                              _authService.signOut();
+                                            },
+                                            child: const Text('Sign Out'),
+                                            style: TextButton.styleFrom(
+                                              foregroundColor: Colors.red,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                );
+                              },
                       style: TextButton.styleFrom(
                         backgroundColor: Colors.red.withOpacity(0.1),
                         foregroundColor: Colors.red,
@@ -281,7 +310,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                     ),
                   ),
-                  
+
                   // App version footer
                   Center(
                     child: Padding(
@@ -298,65 +327,58 @@ class _SettingsPageState extends State<SettingsPage> {
               );
             },
           ),
-          
+
           // Show loading overlay when processing
           if (_isLoading)
             Container(
               color: Colors.black.withOpacity(0.3),
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
+              child: const Center(child: CircularProgressIndicator()),
             ),
         ],
       ),
     );
   }
 
-  // Add this method to handle profile image selection
+  // Update your existing _showProfileImageOptions method
   void _showProfileImageOptions(BuildContext context) {
     final storageService = StorageService();
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('Take a photo'),
-              onTap: () async {
-                Navigator.pop(context);
+      builder:
+          (dialogContext) => SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.color_lens),
+                  title: const Text('Change avatar color'),
+                  onTap: () async {
+                    // Close the modal first
+                    Navigator.pop(dialogContext);
 
-                final imageFile = await storageService.pickImage(
-                  ImageSource.camera,
-                );
-                if (imageFile != null) {
-                  final croppedFile = await storageService.cropImage(
-                    imageFile,
-                    context,
-                  );
-                  if (croppedFile != null) {
+                    // Show loading
                     setState(() => _isLoading = true);
+
                     try {
-                      await storageService.uploadProfileImage(croppedFile);
+                      // Just call uploadProfileImage without an actual file
+                      // This will generate a new color
+                      await storageService.uploadProfileImage(null);
                       if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Profile picture updated'),
-                          ),
+                        scaffoldMessenger.showSnackBar(
+                          const SnackBar(content: Text('Avatar updated')),
                         );
                       }
                     } catch (e) {
+                      print("Avatar update error: $e");
                       if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        scaffoldMessenger.showSnackBar(
                           SnackBar(
-                            content: Text(
-                              'Failed to update profile picture: $e',
-                            ),
+                            content: Text('Failed to update avatar: $e'),
                           ),
                         );
                       }
@@ -365,43 +387,31 @@ class _SettingsPageState extends State<SettingsPage> {
                         setState(() => _isLoading = false);
                       }
                     }
-                  }
-                }
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Choose from gallery'),
-              onTap: () async {
-                Navigator.pop(context);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.refresh),
+                  title: const Text('Reset to default avatar'),
+                  onTap: () async {
+                    // Close the modal first
+                    Navigator.pop(dialogContext);
 
-                final imageFile = await storageService.pickImage(
-                  ImageSource.gallery,
-                );
-                if (imageFile != null) {
-                  final croppedFile = await storageService.cropImage(
-                    imageFile,
-                    context,
-                  );
-                  if (croppedFile != null) {
+                    // Show loading
                     setState(() => _isLoading = true);
+
                     try {
-                      await storageService.uploadProfileImage(croppedFile);
+                      await storageService.deleteProfileImage();
                       if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        scaffoldMessenger.showSnackBar(
                           const SnackBar(
-                            content: Text('Profile picture updated'),
+                            content: Text('Avatar reset to default'),
                           ),
                         );
                       }
                     } catch (e) {
                       if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Failed to update profile picture: $e',
-                            ),
-                          ),
+                        scaffoldMessenger.showSnackBar(
+                          SnackBar(content: Text('Failed to reset avatar: $e')),
                         );
                       }
                     } finally {
@@ -409,71 +419,11 @@ class _SettingsPageState extends State<SettingsPage> {
                         setState(() => _isLoading = false);
                       }
                     }
-                  }
-                }
-              },
+                  },
+                ),
+              ],
             ),
-            ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text(
-                'Remove profile picture',
-                style: TextStyle(color: Colors.red),
-              ),
-              onTap: () async {
-                Navigator.pop(context);
-
-                final confirm = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Remove Profile Picture'),
-                    content: const Text(
-                      'Are you sure you want to remove your profile picture?',
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Remove'),
-                      ),
-                    ],
-                  ),
-                );
-
-                if (confirm == true) {
-                  setState(() => _isLoading = true);
-                  try {
-                    await storageService.deleteProfileImage();
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Profile picture removed'),
-                        ),
-                      );
-                    }
-                  } catch (e) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Failed to remove profile picture: $e',
-                          ),
-                        ),
-                      );
-                    }
-                  } finally {
-                    if (mounted) {
-                      setState(() => _isLoading = false);
-                    }
-                  }
-                }
-              },
-            ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 }
