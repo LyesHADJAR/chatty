@@ -39,40 +39,43 @@ class ChatService {
         .snapshots()
         .asyncMap((snapshot) async {
           List<ChatUser> chatUsers = [];
-          
+
           for (var doc in snapshot.docs) {
             String chatRoomId = doc.id;
             List<String> emails = chatRoomId.split('_');
-            
+
             if (emails.length == 2) {
-              
               // Get the latest message for this chat
-              QuerySnapshot messagesSnapshot = await _firestore
-                  .collection("chat_rooms")
-                  .doc(chatRoomId)
-                  .collection("messages")
-                  .orderBy("timestamp", descending: true)
-                  .limit(1)
-                  .get();
-              
+              QuerySnapshot messagesSnapshot =
+                  await _firestore
+                      .collection("chat_rooms")
+                      .doc(chatRoomId)
+                      .collection("messages")
+                      .orderBy("timestamp", descending: true)
+                      .limit(1)
+                      .get();
+
               String lastMessage = "";
               Timestamp? timestamp;
-              
+
               if (messagesSnapshot.docs.isNotEmpty) {
-                var messageData = messagesSnapshot.docs.first.data() as Map<String, dynamic>;
+                var messageData =
+                    messagesSnapshot.docs.first.data() as Map<String, dynamic>;
                 lastMessage = messageData['message'] ?? "";
                 timestamp = messageData['timestamp'] as Timestamp?;
               }
-              
-              chatUsers.add(ChatUser(
-                senderEmail: emails[0],
-                receiverEmail: emails[1],
-                lastMessage: lastMessage,
-                timestamp: timestamp ?? Timestamp.now(),
-              ));
+
+              chatUsers.add(
+                ChatUser(
+                  senderEmail: emails[0],
+                  receiverEmail: emails[1],
+                  lastMessage: lastMessage,
+                  timestamp: timestamp ?? Timestamp.now(),
+                ),
+              );
             }
           }
-          
+
           // Sort by most recent message
           chatUsers.sort((a, b) => b.timestamp.compareTo(a.timestamp));
           return chatUsers;
@@ -83,36 +86,44 @@ class ChatService {
   Future<void> sendMessage(String receiverEmail, String message) async {
     // get current user info
     final String currentUserEmail = currentUser!.email!;
+    final String currentUserId = currentUser!.uid;
     final Timestamp timestamp = Timestamp.now();
 
+    // Get receiver's UID
+    String? receiverId = await _getUidFromEmail(receiverEmail);
+    if (receiverId == null) {
+      throw Exception('Receiver not found');
+    }
+
     // create a new message
-    Message newMessage = Message(
-      senderEmail: currentUserEmail,
-      receiverEmail: receiverEmail,
-      message: message,
-      timestamp: timestamp,
-    );
+    Map<String, dynamic> newMessageMap = {
+      'senderEmail': currentUserEmail,
+      'receiverEmail': receiverEmail,
+      'senderId': currentUserId,
+      'receiverId': receiverId,
+      'message': message,
+      'timestamp': timestamp,
+    };
 
     // construct chat room ID (sorted to ensure same ID for both users)
-    List<String> ids = [currentUserEmail, receiverEmail];
-    ids.sort(); // sort the ids to ensure same chatroom ID regardless of who sends message
-    String chatRoomId = ids.join("_");
+    List<String> emailIds = [currentUserEmail, receiverEmail];
+    emailIds.sort(); // sort for consistent chat room ID
+    String chatRoomId = emailIds.join("_");
 
     // add new message to database
     await _firestore
         .collection("chat_rooms")
         .doc(chatRoomId)
         .collection("messages")
-        .add(newMessage.toMap());
-        
+        .add(newMessageMap);
+
     // Update the chat room document with participants array
-    await _firestore
-        .collection("chat_rooms")
-        .doc(chatRoomId)
-        .set({
-          'participants': [currentUserEmail, receiverEmail],
-          'lastUpdated': timestamp,
-        }, SetOptions(merge: true));
+    // (include both emails and UIDs for backward compatibility)
+    await _firestore.collection("chat_rooms").doc(chatRoomId).set({
+      'participants': [currentUserEmail, receiverEmail],
+      'participantIds': [currentUserId, receiverId],
+      'lastUpdated': timestamp,
+    }, SetOptions(merge: true));
   }
 
   // GET MESSAGES
@@ -128,6 +139,26 @@ class ChatService {
         .collection("messages")
         .orderBy("timestamp", descending: false)
         .snapshots();
+  }
+
+  Future<String?> _getUidFromEmail(String email) async {
+    try {
+      QuerySnapshot query =
+          await _firestore
+              .collection('Users')
+              .where('email', isEqualTo: email)
+              .limit(1)
+              .get();
+
+      if (query.docs.isEmpty) {
+        return null;
+      }
+
+      return query.docs.first.id;
+    } catch (e) {
+      print("Error getting UID from email: $e");
+      return null;
+    }
   }
 }
 
@@ -162,7 +193,7 @@ class ChatUser {
   final String receiverEmail;
   final String lastMessage;
   final Timestamp timestamp;
-  
+
   ChatUser({
     required this.senderEmail,
     required this.receiverEmail,

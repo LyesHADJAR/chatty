@@ -4,7 +4,7 @@ import 'package:chatty/components/drawer.dart';
 import 'package:chatty/services/chat/chat_service.dart';
 import 'package:chatty/pages/chat_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import'package:chatty/services/chat/group_service.dart';
+import 'package:chatty/services/chat/group_service.dart';
 import 'package:chatty/components/button.dart';
 import 'package:chatty/models/group.dart';
 import 'package:chatty/pages/create_group_page.dart';
@@ -285,7 +285,7 @@ class _HomePageState extends State<HomePage>
         children: [
           // Simple instructions
           Text(
-            'Find someone by email address',
+            'Find someone by username',
             style: theme.textTheme.titleMedium?.copyWith(
               color: theme.colorScheme.onSurface.withOpacity(0.8),
               fontFamily: 'Montserrat',
@@ -299,7 +299,7 @@ class _HomePageState extends State<HomePage>
           TextField(
             controller: searchController,
             decoration: InputDecoration(
-              hintText: 'Enter email address...',
+              hintText: 'Enter username ...',
               prefixIcon: Icon(
                 Icons.search,
                 color: theme.colorScheme.primary.withOpacity(0.7),
@@ -376,7 +376,7 @@ class _HomePageState extends State<HomePage>
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'Enter an email address to find someone',
+                          'Enter a username to find someone',
                           textAlign: TextAlign.center,
                           style: theme.textTheme.bodyLarge?.copyWith(
                             color: theme.colorScheme.onSurface.withOpacity(0.7),
@@ -422,10 +422,15 @@ class _HomePageState extends State<HomePage>
                               (userData) =>
                                   userData['email'] != null &&
                                   userData['email'] != currentUserEmail &&
-                                  userData['email']
-                                      .toString()
-                                      .toLowerCase()
-                                      .contains(query),
+                                  (userData['username'] != null &&
+                                          userData['username']
+                                              .toString()
+                                              .toLowerCase()
+                                              .contains(query) ||
+                                      userData['email']
+                                          .toString()
+                                          .toLowerCase()
+                                          .contains(query)),
                             )
                             .toList();
 

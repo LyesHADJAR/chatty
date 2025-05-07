@@ -63,15 +63,31 @@ class GroupService {
       return Stream.value([]);
     }
 
+    // Remove the orderBy which requires the index
     return _firestore
         .collection('groups')
         .where('members', arrayContains: currentUser.uid)
-        .orderBy('lastMessageTime', descending: true)
         .snapshots()
         .map((snapshot) {
-          return snapshot.docs.map((doc) {
-            return Group.fromMap(doc.data(), doc.id);
-          }).toList();
+          final groups =
+              snapshot.docs.map((doc) {
+                return Group.fromMap(doc.data(), doc.id);
+              }).toList();
+
+          // Sort in-memory instead of in the query
+          groups.sort((a, b) {
+            if (a.lastMessageTime == null && b.lastMessageTime == null) {
+              return 0;
+            } else if (a.lastMessageTime == null) {
+              return 1; // Put null timestamps at the end
+            } else if (b.lastMessageTime == null) {
+              return -1;
+            } else {
+              return b.lastMessageTime!.compareTo(a.lastMessageTime!);
+            }
+          });
+
+          return groups;
         });
   }
 
