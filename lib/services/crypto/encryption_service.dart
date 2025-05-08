@@ -36,4 +36,9 @@ class EncryptionService {
     final rawMessage = await _aes.decrypt(secretBox, secretKey: secretKey);
     return utf8.decode(rawMessage);
   }
+
+  Future<SecretKey> generateRandomKey() async {
+    final randomKey = await _aes.newSecretKey();
+    return randomKey;
+  }
 }
