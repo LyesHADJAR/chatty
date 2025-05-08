@@ -66,13 +66,13 @@ class _GroupChatPageState extends State<GroupChatPage> {
 
       //get the encrypted key of the current user
       final encryptedKeyData =
-          encryptedMessage.encryptedKeys?[currentUser.email?.toLowerCase()];
+          encryptedMessage.encryptedKeys?[currentUser.email];
       if (encryptedKeyData == null) return 'Key not found';
 
       //derive the shared key between the sender and the current user (receiver)
       final sharedKey = await keyHelper.deriveSharedKey(
-        encryptedMessage.senderId,
         currentUser.uid,
+        encryptedMessage.senderId,
       );
 
       //decrypt the messageKey
