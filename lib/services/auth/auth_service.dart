@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:chatty/services/crypto/key_helper.dart';
 import 'package:chatty/services/storage/storage_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -69,33 +71,40 @@ class AuthService {
   }
 
   // Sign up with email, password and username
-  Future<UserCredential> signUp(String email, String password, String username) async {
-  try {
-    UserCredential cred = await _auth.createUserWithEmailAndPassword(
-      email: email, 
-      password: password,
-    );
-    
-    // Generate initial avatar
-    final storageService = StorageService();
-    final avatarUrl = storageService.generateAvatarUrl(username, email);
-    
-    // Save the user to database
-    _firestore.collection('Users').doc(cred.user!.uid).set({
-      'uid': cred.user!.uid,
-      'email': email,
-      'username': username,
-      'profileImageUrl': avatarUrl,
-      'createdAt': Timestamp.now(),
-    });
-    
-    return cred;
-  } on FirebaseAuthException catch (e) {
-    throw Exception(e.message);
+  Future<UserCredential> signUp(
+    String email,
+    String password,
+    String username,
+  ) async {
+    try {
+      UserCredential cred = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      // Generate initial avatar
+      final storageService = StorageService();
+      final avatarUrl = storageService.generateAvatarUrl(username, email);
+
+      //generate the keys
+      final keyPair = await KeyHelper().getOrGenerateKeyPair(cred.user!.uid);
+      final publicKey = await keyPair.extractPublicKey();
+
+      // Save the user to database
+      _firestore.collection('Users').doc(cred.user!.uid).set({
+        'uid': cred.user!.uid,
+        'email': email,
+        'x25519PublicKey': base64Encode(publicKey.bytes),
+        'username': username,
+        'profileImageUrl': avatarUrl,
+        'createdAt': Timestamp.now(),
+      });
+
+      return cred;
+    } on FirebaseAuthException catch (e) {
+      throw Exception(e.message);
+    }
   }
-}
-
-
 
   // Update username
   Future<void> updateUsername(String newUsername) async {

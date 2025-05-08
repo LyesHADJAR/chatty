@@ -28,10 +28,10 @@ class KeyHelper {
     );
 
     //extract the public key of this user and store it in the firebase collection
-    final publicKey = await keyPair.extractPublicKey();
-    await FirebaseFirestore.instance.collection('Users').doc(userID).update({
-      'x25519PublicKey': base64Encode(publicKey.bytes),
-    });
+    // final publicKey = await keyPair.extractPublicKey();
+    // await FirebaseFirestore.instance.collection('Users').doc(userID).update({
+    //   'x25519PublicKey': base64Encode(publicKey.bytes),
+    // });
 
     return keyPair;
   }
