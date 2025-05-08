@@ -9,10 +9,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() async {
   // Initialize Firebase
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   // Run the app
   runApp(const MyApp());
 }
@@ -46,7 +44,7 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       _isDarkMode = !_isDarkMode;
     });
-    
+
     // Save the theme preference
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isDarkMode', _isDarkMode);
@@ -60,10 +58,12 @@ class _MyAppState extends State<MyApp> {
       theme: lightMode,
       darkTheme: darkMode,
       themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
-      home: AuthGate(
-        toggleTheme: _toggleTheme,
-        isDarkMode: _isDarkMode,
-      ),
+      // routes: {
+      //   '/home':
+      //       (context) =>
+      //           HomePage(toggleTheme: _toggleTheme, isDarkMode: _isDarkMode),
+      // },
+      home: AuthGate(toggleTheme: _toggleTheme, isDarkMode: _isDarkMode),
     );
   }
 }
