@@ -56,13 +56,15 @@ This system uses modern cryptography standards to secure both 1-to-1 and group (
 
 ```json
 {
-  "sender_id": "iJuSlj5RwdfWoO6WBKcZU9gHwRz2",
-  "recipient_id": "qgIdyBHtLZQeoNmVLCxihAPr77M2",
   "ciphertext": "...",
-  "nonce": "...",
+  "decryptedPreview": "Hello",
   "mac": "...",
-  "timestamp": "...",
-  "read": false
+  "nonce": "...",
+  "receiverEmail": "...",
+  "receiverId": "...",
+  "senderEmail": "...",
+  "senderId": "...",
+  "timestamp": "..."
 }
 ```
 
