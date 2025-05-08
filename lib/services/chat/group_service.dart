@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'package:chatty/services/crypto/encryption_service.dart';
+import 'package:chatty/services/crypto/key_helper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:chatty/models/group.dart';
@@ -129,32 +132,82 @@ class GroupService {
       if (userData == null) {
         throw Exception('User data not found');
       }
-
       final username = userData['username'] ?? currentUser.email;
       final userImageUrl = userData['profileImageUrl'];
-
       final timestamp = Timestamp.now();
 
-      // Create new message
-      final newMessage = GroupMessage(
-        groupId: groupId,
-        senderId: currentUser.uid,
-        senderName: username,
-        message: message,
-        timestamp: timestamp,
-        senderImageUrl: userImageUrl,
+      //get th memebers of the group
+      final groupDoc =
+          await _firestore.collection('groups').doc(groupId).get();
+
+      final groupData = groupDoc.data();
+      if (groupData == null) {
+        throw Exception('Group not found');
+      }
+
+      final List<dynamic> memberIDS = groupData['members'] ?? [];
+
+      //generating the random symmetric key to encrypt the message
+      final encryptionService = EncryptionService();
+      final messageKey = await encryptionService.generateRandomKey();
+      final messageKeyBytes = await messageKey.extractBytes();
+
+      //encrypt the message using this symmetric key
+      final encryptedMessage = await encryptionService.encryptMessage(
+        message,
+        messageKey,
       );
+
+      //for each member in the group, encrypt the messageKey using the shared key (between that member and the current user)
+      final keyHelper = KeyHelper();
+      Map<String, dynamic> encryptedKeys = {};
+
+      for (String memberId in memberIDS) {
+        final sharedKey = await keyHelper.deriveSharedKey(
+          currentUser.uid,
+          memberId,
+        );
+
+        final encryptedKeyData = await encryptionService.encryptMessage(
+          base64Encode(messageKeyBytes),
+          sharedKey,
+        );
+
+        final memberDoc =
+            await _firestore.collection('Users').doc(memberId).get();
+        final memberEmail = memberDoc.data()?['email'];
+        if (memberEmail != null) {
+          encryptedKeys[memberEmail.toString().toLowerCase()] = {
+            'key': encryptedKeyData['ciphertext'],
+            'nonce': encryptedKeyData['nonce'],
+            'mac': encryptedKeyData['mac'],
+          };
+        }
+      }
+
+      // Create new message with the encrypted data
+      final newMessage = {
+        'groupId': groupId,
+        'ciphertext': encryptedMessage['ciphertext'],
+        'nonce': encryptedMessage['nonce'],
+        'mac': encryptedMessage['mac'],
+        'encryptedKeys': encryptedKeys,
+        'senderId': currentUser.uid,
+        'senderName': username,
+        'timestamp': timestamp,
+        'senderImageUrl': userImageUrl,
+      };
 
       // Add message to group's messages collection
       await _firestore
           .collection('groups')
           .doc(groupId)
           .collection('messages')
-          .add(newMessage.toMap());
+          .add(newMessage);
 
       // Update group's last message info
       await _firestore.collection('groups').doc(groupId).update({
-        'lastMessage': message,
+        'lastMessage': message.substring(0, message.length.clamp(0, 100)),
         'lastMessageTime': timestamp,
         'lastMessageSender': username,
       });
