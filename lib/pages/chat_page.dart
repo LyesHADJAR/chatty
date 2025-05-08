@@ -1,5 +1,7 @@
 import 'package:chatty/components/chat_bubble.dart';
 import 'package:chatty/components/profile_image.dart';
+import 'package:chatty/services/crypto/encryption_service.dart';
+import 'package:chatty/services/crypto/key_helper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -44,10 +46,10 @@ class _ChatPageState extends State<ChatPage> {
           widget.recieverEmail,
           _messageController.text.trim(),
         );
+
         _messageController.clear();
         _scrollToBottom();
       } catch (e) {
-        // Show error
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -90,6 +92,32 @@ class _ChatPageState extends State<ChatPage> {
       return 'Yesterday, ${DateFormat.jm().format(dateTime)}';
     } else {
       return DateFormat('MMM d, y • h:mm a').format(dateTime);
+    }
+  }
+
+  Future<String> _decryptMessage(Map<String, dynamic> data) async {
+    try {
+      final currentUserID = _auth.currentUser!.uid;
+      final senderID = data['senderId'] ?? data['sender_id'];
+      final receiverID = data['receiverId'] ?? data['receiver_id'];
+      final otherUserId = currentUserID == senderID ? receiverID : senderID;
+
+      final keyHelper = KeyHelper();
+      final encryptionService = EncryptionService();
+
+      final sharedKey = await keyHelper.deriveSharedKey(
+        currentUserID,
+        otherUserId,
+      );
+
+      return await encryptionService.decryptMessage({
+        'ciphertext': data['ciphertext'],
+        'nonce': data['nonce'],
+        'mac': data['mac'],
+      }, sharedKey);
+    } catch (e, st) {
+      print(' Decryption failed: $e');
+      return '[Decryption failed]';
     }
   }
 
@@ -224,57 +252,67 @@ class _ChatPageState extends State<ChatPage> {
           padding: const EdgeInsets.all(16),
           itemBuilder: (context, index) {
             final data = messages[index].data() as Map<String, dynamic>;
-            final messageText = data['message'] as String;
-            final timestamp = data['timestamp'] as Timestamp;
-            final isCurrentUser = data['senderEmail'] == currentUserEmail;
 
-            // Show timestamp for first message and when there's a significant time gap
-            bool showTimestamp = index == 0;
-            if (index > 0) {
-              final prevData =
-                  messages[index - 1].data() as Map<String, dynamic>;
-              final prevTimestamp = prevData['timestamp'] as Timestamp;
-              final timeDiff = timestamp.seconds - prevTimestamp.seconds;
-              if (timeDiff > 300) {
-                showTimestamp = true;
-              }
-            }
+            return FutureBuilder(
+              future: _decryptMessage(data),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const SizedBox();
+                }
+                final messageText = snapshot.data!;
 
-            return Column(
-              children: [
-                if (showTimestamp)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surface,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        _formatTimestamp(timestamp),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.w500,
+                final timestamp = data['timestamp'] as Timestamp;
+                final isCurrentUser = data['senderEmail'] == currentUserEmail;
+
+                // Show timestamp for first message and when there's a significant time gap
+                bool showTimestamp = index == 0;
+                if (index > 0) {
+                  final prevData =
+                      messages[index - 1].data() as Map<String, dynamic>;
+                  final prevTimestamp = prevData['timestamp'] as Timestamp;
+                  final timeDiff = timestamp.seconds - prevTimestamp.seconds;
+                  if (timeDiff > 300) {
+                    showTimestamp = true;
+                  }
+                }
+
+                return Column(
+                  children: [
+                    if (showTimestamp)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surface,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            _formatTimestamp(timestamp),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                Row(
-                  mainAxisAlignment:
-                      isCurrentUser
-                          ? MainAxisAlignment.end
-                          : MainAxisAlignment.start,
-                  children: [
-                    ChatBubble(
-                      message: messageText,
-                      isCurrentUser: isCurrentUser,
+                    Row(
+                      mainAxisAlignment:
+                          isCurrentUser
+                              ? MainAxisAlignment.end
+                              : MainAxisAlignment.start,
+                      children: [
+                        ChatBubble(
+                          message: messageText,
+                          isCurrentUser: isCurrentUser,
+                        ),
+                      ],
                     ),
                   ],
-                ),
-              ],
+                );
+              },
             );
           },
         );
