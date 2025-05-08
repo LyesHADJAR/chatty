@@ -6,7 +6,7 @@ This system uses modern cryptography standards to secure both 1-to-1 and group (
 
 ---
 
-## 🔒 1-to-1 Encryption
+##  1-to-1 Encryption
 
 ### 1. X25519 (Asymmetric Algorithm)
 
