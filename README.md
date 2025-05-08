@@ -105,11 +105,7 @@ For every group member:
 
 ```json
 {
-  "groupId": "uAZKrVzCTvu1zyJ9prAq",
   "ciphertext": "base64-encoded-encrypted-message",
-  "nonce": "base64-encoded-nonce",
-  "mac": "base64-encoded-mac",
-  
   "encryptedKeys": {
     "user1@example.com": {
       "key": "encrypted-key-for-user1",
@@ -122,7 +118,9 @@ For every group member:
       "mac": "mac2"
     }
   },
-
+  "groupId": "uAZKrVzCTvu1zyJ9prAq",
+  "mac": "base64-encoded-mac",
+  "nonce": "base64-encoded-nonce",
   "senderId": "VrumwPkTXwd40f1DVfFqQ8XLTfn2",
   "senderImageUrl": "https://...",
   "senderName": "sabrine",
