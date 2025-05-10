@@ -1,3 +1,4 @@
+import 'package:chatty/components/attachment_bottom_sheet.dart';
 import 'package:chatty/components/chat_bubble.dart';
 import 'package:chatty/components/profile_image.dart';
 import 'package:chatty/pages/contact_info_page.dart';
@@ -352,7 +353,22 @@ class _ChatPageState extends State<ChatPage> {
                 size: 28,
               ),
               onPressed: () {
-                // Future feature: attachments
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(20),
+                    ),
+                  ),
+                  builder:
+                      (context) => AttachmentBottomSheet(
+                        onSendLink: (url) {
+                          _messageController.text = "[LINK]$url";
+                          sendMessage();
+                        },
+                      ),
+                );
               },
             ),
 

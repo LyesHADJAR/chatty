@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:chatty/components/attachment_bottom_sheet.dart';
 import 'package:chatty/services/crypto/encryption_service.dart';
 import 'package:chatty/services/crypto/key_helper.dart';
 import 'package:cryptography/cryptography.dart';
@@ -420,11 +421,21 @@ class _GroupChatPageState extends State<GroupChatPage> {
                           size: 28,
                         ),
                         onPressed: () {
-                          // Future feature: attachments
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Attachments coming soon'),
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.vertical(
+                                top: Radius.circular(20),
+                              ),
                             ),
+                            builder:
+                                (context) => AttachmentBottomSheet(
+                                  onSendLink: (url) {
+                                    _messageController.text = "[LINK]$url";
+                                    _sendMessage();
+                                  },
+                                ),
                           );
                         },
                       ),
