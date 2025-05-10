@@ -1,8 +1,10 @@
 import 'package:chatty/components/profile_image.dart';
 import 'package:chatty/models/chat_user.dart';
+import 'package:chatty/pages/edit_profile_page.dart';
 import 'package:chatty/services/storage/storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:chatty/services/auth/auth_service.dart';
+import 'package:chatty/pages/change_password_page.dart';
 
 class SettingsPage extends StatefulWidget {
   final Function toggleTheme;
@@ -67,7 +69,8 @@ class _SettingsPageState extends State<SettingsPage> {
                                 imageUrl: user?.profileImageUrl,
                                 fallbackText:
                                     user?.username ?? user?.email ?? '',
-                                size: 120, backgroundColor: theme.colorScheme.primary,
+                                size: 120,
+                                backgroundColor: theme.colorScheme.primary,
                               ),
                               Positioned(
                                 bottom: 0,
@@ -204,13 +207,16 @@ class _SettingsPageState extends State<SettingsPage> {
                           ),
                           enabled: !_isLoading,
                           onTap: () {
-                            // Navigate to profile edit page
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Profile editing coming soon!'),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
+                            if (snapshot.data != null) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) =>
+                                          EditProfilePage(user: snapshot.data!),
+                                ),
+                              );
+                            }
                           },
                         ),
                         Divider(
@@ -239,13 +245,11 @@ class _SettingsPageState extends State<SettingsPage> {
                           ),
                           enabled: !_isLoading,
                           onTap: () {
-                            // Navigate to change password page
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Password change feature coming soon!',
-                                ),
-                                duration: Duration(seconds: 2),
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => const ChangePasswordPage(),
                               ),
                             );
                           },
