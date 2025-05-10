@@ -7,9 +7,9 @@ class LoginPage extends StatefulWidget {
   final void Function()? onTap;
   final Function toggleTheme;
   final bool isDarkMode;
-  
+
   const LoginPage({
-    Key? key, 
+    Key? key,
     this.onTap,
     required this.toggleTheme,
     required this.isDarkMode,
@@ -20,19 +20,21 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _emailOrUsernameController = TextEditingController();
+  final TextEditingController _emailOrUsernameController =
+      TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final AuthService _authService = AuthService();
   bool _isLoggingIn = false;
 
   void _login() async {
-    if (_emailOrUsernameController.text.isEmpty || _passwordController.text.isEmpty) {
+    if (_emailOrUsernameController.text.isEmpty ||
+        _passwordController.text.isEmpty) {
       _showError('Please enter your username/email and password');
       return;
     }
-    
+
     setState(() => _isLoggingIn = true);
-    
+
     try {
       await _authService.signIn(
         _emailOrUsernameController.text.trim(),
@@ -49,27 +51,28 @@ class _LoginPageState extends State<LoginPage> {
       }
     }
   }
-  
+
   void _showError(String message) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Error'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Error'),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
@@ -92,9 +95,9 @@ class _LoginPageState extends State<LoginPage> {
                     color: theme.colorScheme.onPrimary,
                   ),
                 ),
-                
+
                 const SizedBox(height: 32),
-                
+
                 // App name
                 Text(
                   'Welcome to Chatty',
@@ -103,27 +106,27 @@ class _LoginPageState extends State<LoginPage> {
                     color: theme.colorScheme.primary,
                   ),
                 ),
-                
+
                 const SizedBox(height: 8),
-                
+
                 Text(
                   'Sign in to continue',
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: theme.colorScheme.onSurface.withOpacity(0.7),
                   ),
                 ),
-                
+
                 const SizedBox(height: 40),
-                
+
                 // Email/username field
                 CustomTextField(
-                  hintText: 'Email or Username', 
+                  hintText: 'Email or Username',
                   controller: _emailOrUsernameController,
                   prefixIcon: Icons.person_outline,
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Password field
                 CustomTextField(
                   hintText: 'Password',
@@ -131,65 +134,103 @@ class _LoginPageState extends State<LoginPage> {
                   prefixIcon: Icons.lock_outline,
                   isPassword: true,
                 ),
-                
+
                 const SizedBox(height: 12),
-                
+
                 // Forgot password
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () {
                       // Show forgot password dialog
+                      final emailController = TextEditingController();
+
                       showDialog(
                         context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Reset Password'),
-                          content: const Text('Please enter your email address to receive a password reset link.'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text('Cancel'),
+                        builder:
+                            (context) => AlertDialog(
+                              title: const Text('Reset Password'),
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text(
+                                    'Please enter your email address to receive a password reset link.',
+                                  ),
+                                  const SizedBox(height: 16),
+                                  TextField(
+                                    controller: emailController,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Email',
+                                      border: OutlineInputBorder(),
+                                    ),
+                                    keyboardType: TextInputType.emailAddress,
+                                  ),
+                                ],
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () async {
+                                    if (emailController.text.isEmpty) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Please enter your email',
+                                          ),
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    try {
+                                      await _authService.resetPassword(
+                                        emailController.text.trim(),
+                                      );
+                                      Navigator.pop(context);
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Password reset email sent. Check your inbox.',
+                                          ),
+                                        ),
+                                      );
+                                    } catch (e) {
+                                      Navigator.pop(context);
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(content: Text(e.toString())),
+                                      );
+                                    }
+                                  },
+                                  child: const Text('Send Link'),
+                                ),
+                              ],
                             ),
-                            TextButton(
-                              onPressed: () {
-                                // Send password reset email
-                                Navigator.pop(context);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Password reset functionality coming soon')),
-                                );
-                              },
-                              child: const Text('Send Link'),
-                            ),
-                          ],
-                        ),
                       );
                     },
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: const Size(50, 30),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    child: Text(
-                      'Forgot Password?',
-                      style: TextStyle(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+                    child: const Text('Forgot Password?'),
                   ),
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Login button
                 CustomButton(
                   text: 'Login',
                   onTap: _isLoggingIn ? null : _login,
                   isLoading: _isLoggingIn,
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Sign up link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -215,9 +256,9 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 32),
-                
+
                 // Theme toggle
                 TextButton.icon(
                   onPressed: () => widget.toggleTheme(),
@@ -226,13 +267,17 @@ class _LoginPageState extends State<LoginPage> {
                     size: 18,
                   ),
                   label: Text(
-                    widget.isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+                    widget.isDarkMode
+                        ? 'Switch to Light Mode'
+                        : 'Switch to Dark Mode',
                   ),
                   style: TextButton.styleFrom(
-                    foregroundColor: theme.colorScheme.onSurface.withOpacity(0.7),
+                    foregroundColor: theme.colorScheme.onSurface.withOpacity(
+                      0.7,
+                    ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 40),
               ],
             ),
@@ -241,4 +286,4 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-} 
+}
