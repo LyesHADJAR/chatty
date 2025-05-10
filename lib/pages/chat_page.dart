@@ -1,5 +1,6 @@
 import 'package:chatty/components/chat_bubble.dart';
 import 'package:chatty/components/profile_image.dart';
+import 'package:chatty/pages/contact_info_page.dart';
 import 'package:chatty/services/crypto/encryption_service.dart';
 import 'package:chatty/services/crypto/key_helper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -115,7 +116,7 @@ class _ChatPageState extends State<ChatPage> {
         'nonce': data['nonce'],
         'mac': data['mac'],
       }, sharedKey);
-    } catch (e, st) {
+    } catch (e) {
       print(' Decryption failed: $e');
       return '[Decryption failed]';
     }
@@ -173,11 +174,15 @@ class _ChatPageState extends State<ChatPage> {
               ),
             ),
             onPressed: () {
-              // Show contact info
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Contact info coming soon!'),
-                  duration: Duration(seconds: 2),
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (context) => ContactInfoPage(
+                        userEmail: widget.recieverEmail,
+                        username: widget.recieverUsername,
+                        profileImageUrl: widget.recieverProfileImageUrl,
+                      ),
                 ),
               );
             },
