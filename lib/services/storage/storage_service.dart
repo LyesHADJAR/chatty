@@ -2,10 +2,12 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:chatty/services/storage/image_upload_service.dart';
 
 class StorageService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final ImageUploadService _imageUploadService = ImageUploadService();
 
   // Pick image from gallery or camera (still useful for UI)
   Future<File?> pickImage(ImageSource source) async {
@@ -87,32 +89,33 @@ class StorageService {
         throw Exception('User not logged in');
       }
 
-      print("Updating profile image for user ${user.uid}");
-
-      // Get current user data to generate a proper avatar
+      // Get current user data
       final userData = await _firestore.collection('Users').doc(user.uid).get();
       final username =
           userData.data()?['username'] ?? user.email?.split('@').first;
 
-      // For actual file uploads, we'll use a random color instead
-      // This gives visual feedback that something changed even though we're not storing the image
-      final String randomColor =
-          '#${_getRandomColor(DateTime.now().toString())}';
+      String? avatarUrl;
 
-      // Generate an avatar URL
-      final String avatarUrl = generateAvatarUrl(
-        username,
-        user.email,
-        randomColor.replaceAll('#', ''),
-      );
+      if (file != null) {
+        // Upload file to ImgBB
+        avatarUrl = await _imageUploadService.uploadImage(file);
+
+        if (avatarUrl == null) {
+          // Fallback to avatar generation if upload fails
+          final randomColor = _getRandomColor(DateTime.now().toString());
+          avatarUrl = generateAvatarUrl(username, user.email, randomColor);
+        }
+      } else {
+        // Generate new avatar with random color
+        final randomColor = _getRandomColor(DateTime.now().toString());
+        avatarUrl = generateAvatarUrl(username, user.email, randomColor);
+      }
 
       // Update user document with avatar URL
       await _firestore.collection('Users').doc(user.uid).update({
         'profileImageUrl': avatarUrl,
         'lastAvatarUpdate': FieldValue.serverTimestamp(),
       });
-
-      print("User document updated with avatar URL");
 
       return avatarUrl;
     } catch (e) {

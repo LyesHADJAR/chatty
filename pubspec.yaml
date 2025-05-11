@@ -26,6 +26,8 @@ dependencies:
   flutter_secure_storage: ^9.0.0
   convert: ^3.1.1
   url_launcher: ^6.3.1
+  dotenv: ^4.2.0
+  flutter_dotenv: ^5.2.1
 
 dev_dependencies:
   flutter_test:
@@ -45,3 +47,6 @@ fonts:
         weight: 500
       - asset: assets/fonts/Montserrat-Light.ttf
         weight: 300
+
+assets:
+  - .env

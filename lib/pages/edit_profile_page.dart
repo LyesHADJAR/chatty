@@ -1,9 +1,11 @@
+import 'package:chatty/services/storage/image_upload_service.dart';
 import 'package:flutter/material.dart';
 import 'package:chatty/components/button.dart';
 import 'package:chatty/components/profile_image.dart';
 import 'package:chatty/models/chat_user.dart';
 import 'package:chatty/services/auth/auth_service.dart';
 import 'package:chatty/services/storage/storage_service.dart';
+import 'package:image_picker/image_picker.dart';
 
 class EditProfilePage extends StatefulWidget {
   final ChattyUser user;
@@ -37,16 +39,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
       setState(() => _usernameError = 'Username must be at least 3 characters');
       return;
     }
-    
+
     // Check for valid characters (alphanumeric and underscore only)
     if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(username)) {
-      setState(() => _usernameError = 'Only letters, numbers, and underscores allowed');
+      setState(
+        () => _usernameError = 'Only letters, numbers, and underscores allowed',
+      );
       return;
     }
-    
+
     try {
       bool isAvailable = await _authService.isUsernameAvailable(username);
-      setState(() => _usernameError = isAvailable ? null : 'Username already taken');
+      setState(
+        () => _usernameError = isAvailable ? null : 'Username already taken',
+      );
     } catch (e) {
       setState(() => _usernameError = 'Error checking username');
     }
@@ -54,16 +60,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   Future<void> _saveChanges() async {
     if (_usernameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Username cannot be empty')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Username cannot be empty')));
       return;
     }
 
     if (_usernameError != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_usernameError!)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_usernameError!)));
       return;
     }
 
@@ -83,9 +89,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update profile: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to update profile: $e')));
       }
     } finally {
       if (mounted) {
@@ -104,13 +110,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
         actions: [
           TextButton(
             onPressed: _isLoading ? null : _saveChanges,
-            child: _isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Save'),
+            child:
+                _isLoading
+                    ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                    : const Text('Save'),
           ),
         ],
       ),
@@ -153,9 +160,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             // Email (read-only)
             TextField(
               readOnly: true,
@@ -167,9 +174,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
               ),
               controller: TextEditingController(text: widget.user.email),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Username
             TextField(
               controller: _usernameController,
@@ -181,9 +188,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
               ),
               onChanged: _checkUsername,
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             // Save button
             CustomButton(
               text: 'Save Changes',
@@ -197,72 +204,159 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   void _showProfileImageOptions(BuildContext context) {
+    final imageUploadService = ImageUploadService();
+
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (dialogContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.color_lens),
-              title: const Text('Change avatar color'),
-              onTap: () async {
-                Navigator.pop(dialogContext);
-                setState(() => _isLoading = true);
-                
-                try {
-                  await _storageService.uploadProfileImage(null);
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Avatar updated')),
+      builder:
+          (dialogContext) => SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.photo_camera),
+                  title: const Text('Take Photo'),
+                  onTap: () async {
+                    Navigator.pop(dialogContext);
+
+                    final imageFile = await imageUploadService.pickImage(
+                      ImageSource.camera,
                     );
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to update avatar: $e')),
+                    if (imageFile != null) {
+                      setState(() => _isLoading = true);
+
+                      try {
+                        await _storageService.uploadProfileImage(imageFile);
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Profile picture updated'),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Failed to update profile picture: $e',
+                              ),
+                            ),
+                          );
+                        }
+                      } finally {
+                        if (mounted) {
+                          setState(() => _isLoading = false);
+                        }
+                      }
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library),
+                  title: const Text('Choose from Gallery'),
+                  onTap: () async {
+                    Navigator.pop(dialogContext);
+
+                    final imageFile = await imageUploadService.pickImage(
+                      ImageSource.gallery,
                     );
-                  }
-                } finally {
-                  if (mounted) {
-                    setState(() => _isLoading = false);
-                  }
-                }
-              },
+                    if (imageFile != null) {
+                      setState(() => _isLoading = true);
+
+                      try {
+                        await _storageService.uploadProfileImage(imageFile);
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Profile picture updated'),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Failed to update profile picture: $e',
+                              ),
+                            ),
+                          );
+                        }
+                      } finally {
+                        if (mounted) {
+                          setState(() => _isLoading = false);
+                        }
+                      }
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.color_lens),
+                  title: const Text('Change avatar color'),
+                  onTap: () async {
+                    // Existing functionality to change color
+                    Navigator.pop(dialogContext);
+                    setState(() => _isLoading = true);
+
+                    try {
+                      await _storageService.uploadProfileImage(null);
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Avatar updated')),
+                        );
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Failed to update avatar: $e'),
+                          ),
+                        );
+                      }
+                    } finally {
+                      if (mounted) {
+                        setState(() => _isLoading = false);
+                      }
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.refresh),
+                  title: const Text('Reset to default avatar'),
+                  onTap: () async {
+                    // Existing functionality to reset avatar
+                    Navigator.pop(dialogContext);
+                    setState(() => _isLoading = true);
+
+                    try {
+                      await _storageService.deleteProfileImage();
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Avatar reset to default'),
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to reset avatar: $e')),
+                        );
+                      }
+                    } finally {
+                      if (mounted) {
+                        setState(() => _isLoading = false);
+                      }
+                    }
+                  },
+                ),
+              ],
             ),
-            ListTile(
-              leading: const Icon(Icons.refresh),
-              title: const Text('Reset to default avatar'),
-              onTap: () async {
-                Navigator.pop(dialogContext);
-                setState(() => _isLoading = true);
-                
-                try {
-                  await _storageService.deleteProfileImage();
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Avatar reset to default')),
-                    );
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to reset avatar: $e')),
-                    );
-                  }
-                } finally {
-                  if (mounted) {
-                    setState(() => _isLoading = false);
-                  }
-                }
-              },
-            ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 }
